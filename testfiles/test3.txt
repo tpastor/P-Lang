@@ -1,0 +1,15 @@
+fn makeAdder(offset) {
+    fn add (x,y) {
+        // test pastot comment    
+        x + y + offset
+    }
+    // optional
+    add
+}
+const adder = makeAdder(1)
+print(adder(10,4))
+
+fn sub (x,y) {
+    x - y 
+}
+print(sub(10,4))    

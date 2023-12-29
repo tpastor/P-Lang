@@ -1,0 +1,22 @@
+fn stuff (x,y) {
+    if (x > 5) {
+        return 2
+        5 +3
+    }
+
+    if (y == 2) {
+        y
+        return
+    }
+    return 5
+    5 +4
+}
+
+fn st() {
+    5
+}
+
+print(stuff(10,4))  
+print(stuff(2,4))    
+print(stuff(2,2))   
+print(st()) 

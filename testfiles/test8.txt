@@ -1,0 +1,39 @@
+print("start while3")
+let x = 10
+while (x > 0) {
+    x--
+    if (x > 8) {
+        continue
+    }
+    print(x)    
+}
+print("end while3")
+
+print("start")
+for(let a = 1; a < 10;a++) {
+    print(a)
+    if (a > 5) {
+        break
+    }
+}
+print("end break")
+print("start")
+for(let b = 1; b < 10;b++) {
+    print(b)
+    if (b  <  5) {
+        continue
+    } 
+    print("opsss")
+}
+print("end continue")
+
+print("start while2")
+x = 10
+while (x > 0) {
+    x--
+    print(x)
+    if (x == 5) {
+        break
+    }
+}
+print("end while2")

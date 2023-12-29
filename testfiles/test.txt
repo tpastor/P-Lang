@@ -1,0 +1,17 @@
+const ttttt = 7734
+5 + 2
+let a = 6;
+let t = 78
+let tt
+a = 17
+let z = a + t + ttttt
+let zz = a + t + ttttt;
+let foo = 1;
+const obj = {
+  x: 100,
+  y: 32,
+  foo: foo,
+  complex: {
+    bar: true,
+  },
+};

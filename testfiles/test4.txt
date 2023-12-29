@@ -1,0 +1,39 @@
+if (false) {
+    print("test")
+}
+
+if (1==1) {
+    print("test2")
+}
+
+if (1==2) {
+    print("test3")
+}
+
+const x = 10
+
+if (x==10) {
+    print("test4")
+}
+
+const y = "p"
+
+if (y=="p") {
+    print("test5")
+}
+
+if (y=="ppp") {
+    print("test6")
+}
+
+const z = true
+
+if (z==true) {
+    print("test7")
+}
+
+if (z==false) {
+    print("test8")
+}
+
+print("ended")

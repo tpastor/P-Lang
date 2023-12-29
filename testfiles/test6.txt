@@ -1,0 +1,8 @@
+let str = readFile("./testfiles/test5.txt")
+const val = str.split("\n")
+print(val.length())
+
+for(let a = 0; a < val.length(); a++) {
+    print(val.get(a))
+}
+
