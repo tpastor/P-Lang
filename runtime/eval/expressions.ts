@@ -148,12 +148,20 @@ export function eval_assignment(
     node: AssignmentExpr,
     env: Environment,
 ): RuntimeVal {
-    if (node.assigne.kind !== "Identifier") {
-        throw `Invalid LHS inside assignment expr ${JSON.stringify(node.assigne)}`;
+    if (node.assigne.kind !== "Identifier" && node.assigne.kind !== "MemberExpr") {    
+        throw `Invalid LHS (must be identifier of member expression) inside assignment expr ${JSON.stringify(node.assigne)}`;
     }
 
-    const varname = (node.assigne as Identifier).symbol;
-    return env.assignVar(varname, evaluate(node.value, env));
+    if (node.assigne.kind == "MemberExpr") {
+        const target = node.assigne as MemberExpr
+        const obj: ObjectVal = evaluate(target.object, env) as ObjectVal
+        const value = evaluate(node.value, env)
+        obj.properties.set((target.property as Identifier).symbol, value)
+        return value;        
+    } else {
+        const varname = (node.assigne as Identifier).symbol;
+        return env.assignVar(varname, evaluate(node.value, env));
+    }
 }
 
 
@@ -194,7 +202,7 @@ export function eval_body(body: Stmt[], scope: Environment, isBreakContinueEnabl
 }
 
 export function eval_return(ret: Return, scope: Environment): RuntimeVal {
-    const retVal = ret.returnVal ? evaluate(ret.returnVal, scope) : MK_NULL();
+    const retVal = ret.returnVal && ret.returnVal.length > 0 ? evaluate(ret.returnVal[0], scope) : MK_NULL();
     scope.returnVal = retVal;
     return retVal;
 }
@@ -217,10 +225,10 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
         return eval_function(fn, args);
     }
 
-    if (fn.type == "delegatedCall" && !(fn as DelegatedCall).areCallersAndCallerAdded) {
+    if (fn.type == "delegatedCall" && !(fn as DelegatedCall).areCallerAndCalleeAdded) {
         const call = fn as DelegatedCall;        
         call.callee = [args[0] as FunctionVal]
-        call.areCallersAndCallerAdded = true
+        call.areCallerAndCalleeAdded = true
         return call;
     } else if (fn.type == "delegatedCall") {
         const delCal = fn as DelegatedCall;

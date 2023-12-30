@@ -1,3 +1,10 @@
+let aa = { test: "variable" }
+print(aa.test)
+aa.test = "variable2"
+aa.test2 = "variable3"
+print(aa.test)
+print(aa.test2)
+
 let x = [10,20]
 print(x)
 

@@ -65,13 +65,13 @@ import Environment from "./environment";
   export interface DelegatedCall extends RuntimeVal {
     type: "delegatedCall";  
     combinerFunction: CombineFunction;
-    areCallersAndCallerAdded: boolean;
+    areCallerAndCalleeAdded: boolean;
     caller: FunctionVal;
     callee: FunctionVal[];
   }
 
   export function MK_DELEGATED_FUNCTION(func:CombineFunction, caller: FunctionVal, callee: FunctionVal[]) {
-    return { type: "delegatedCall", areCallersAndCallerAdded: false, combinerFunction: func, callee, caller } as DelegatedCall;
+    return { type: "delegatedCall", areCallerAndCalleeAdded: false, combinerFunction: func, callee, caller } as DelegatedCall;
   }
 
   export function MK_NUMBER(n = 0) {

@@ -126,9 +126,9 @@ export default class Parser {
   }
   private parse_return(): Stmt {
     this.eat();
-    let ret = undefined;
+    let ret = [];
     if (this.at().type != TokenType.CloseBrace) {
-      ret = this.parse_expr()
+      ret.push(this.parse_arguments_list())
     }
     if (this.at().type == TokenType.Semicolon) {
       this.eat();

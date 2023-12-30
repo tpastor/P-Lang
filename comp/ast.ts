@@ -172,5 +172,5 @@ export interface ContinueBreak extends Expr {
 
 export interface Return extends Expr {
   kind: "Return";
-  returnVal?: Expr 
+  returnVal: Expr[] 
 }
