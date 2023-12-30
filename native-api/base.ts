@@ -19,6 +19,13 @@ export function createGlobalEnv() {
     env.declareVar("time", MK_NATIVE_FN((args, scope) => { 
         return MK_NUMBER(Date.now())
     }), true)
+
+    env.declareVar("assert", MK_NATIVE_FN((args, scope) => { 
+        if (getRuntimeValue(args[0]) != getRuntimeValue(args[1])) {
+            throw "Elements " + JSON.stringify(args) + " should be the same" 
+        }
+        return MK_NULL();
+    }), true)
   
     return env;
   }

@@ -14,5 +14,6 @@ print(c)
 
 let d = a.andThen(b)
 print(d())
+assert(25, d())
 
 2 + 1
