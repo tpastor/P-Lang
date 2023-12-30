@@ -8,8 +8,10 @@ fn makeAdder(offset) {
 }
 const adder = makeAdder(1)
 print(adder(10,4))
+assert(15, adder(10,4))
 
 fn sub (x,y) {
     x - y 
 }
 print(sub(10,4))    
+assert(6,sub(10,4))

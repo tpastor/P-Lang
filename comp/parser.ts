@@ -128,7 +128,7 @@ export default class Parser {
     this.eat();
     let ret = [];
     if (this.at().type != TokenType.CloseBrace) {
-      ret.push(this.parse_arguments_list())
+      this.parse_arguments_list().forEach(arg => ret.push(arg))
     }
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
@@ -423,12 +423,11 @@ export default class Parser {
   // ( LET | CONST ) IDENT = EXPR[](;)
   // ( LET | CONST ) IDENT = EXPR[X,P,T,O](;)
   // ( LET | CONST ) IDENT = FUNC ....(;)
+  // ( LET | CONST ) IDENT1, IDENT2 = FUNC ....(;)
   parse_var_declaration(): Stmt {
     const isConstant = this.eat().type == TokenType.Const;
-    const identifier = this.expect(
-      TokenType.Identifier,
-      "Expected identifier name following let | const keywords.",
-    ).value;
+    const identifiers = this.parse_identifier_list()
+    const identifier = identifiers[0]
 
     if (this.at().type != TokenType.Equals || this.at().type == TokenType.Semicolon) {
       if (this.at().type == TokenType.Semicolon) {
@@ -440,7 +439,7 @@ export default class Parser {
 
       return {
         kind: "VarDeclaration",
-        identifier,
+        identifier: [identifier],
         constant: false,
         isArray: false,
       } as VarDeclaration;
@@ -461,7 +460,7 @@ export default class Parser {
 
       return {
         kind: "VarDeclaration",
-        identifier,
+        identifier: [identifier],
         constant: isConstant,
         isArray: true
       } as VarDeclaration;
@@ -498,7 +497,7 @@ export default class Parser {
 
       stmts.unshift({
         kind: "VarDeclaration",
-        identifier,
+        identifier: [identifier],
         constant: isConstant,
         isArray: true
       } as VarDeclaration)
@@ -516,12 +515,13 @@ export default class Parser {
     if (this.at().type == TokenType.Fn) {
         const func: FunctionDeclaration = this.parse_fn_declaration()
         const stmts:Stmt[] = [func]
+
         stmts.unshift({
           kind: "VarDeclaration",
-          identifier,
+          identifier: [identifier],
           constant: isConstant,
-          isArray: true
-        } as VarDeclaration)
+          isArray: false
+        } as VarDeclaration)  
         
         stmts.push(
         { value: {
@@ -543,10 +543,11 @@ export default class Parser {
 
     }
 
+    //
     const declaration = {
       kind: "VarDeclaration",
-      value: this.parse_expr(),
-      identifier,
+      value: [this.parse_expr()],
+      identifier: identifiers,
       constant: isConstant,
       isArray: false
     } as VarDeclaration;
@@ -666,6 +667,16 @@ export default class Parser {
 
     while (this.at().type == TokenType.Comma && this.eat()) {
       args.push(this.parse_assignment_expr());
+    }
+
+    return args;
+  }
+
+  private parse_identifier_list(): string[] {
+    const args = [this.expect(TokenType.Identifier, "Variable names can only be identifier").value];
+
+    while (this.at().type == TokenType.Comma && this.eat()) {
+      args.push(this.expect(TokenType.Identifier, "Variable names can only be identifier").value);
     }
 
     return args;

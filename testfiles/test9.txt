@@ -2,6 +2,7 @@ let a = 5
 
 if (a > 7) {
     print("1")
+    assert(1,1)
 } else {
     print("2")
 }
@@ -10,4 +11,5 @@ if (a > 1) {
     print("5")
 } else {
     print("6")
+    assert(1,1)
 }

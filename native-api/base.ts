@@ -77,7 +77,7 @@ export function print(args: RuntimeVal[], scope: Environment) {
                 }
                 const toString: FunctionVal = getObjectToString(arg as ObjectVal)
                 if (toString) {
-                    print([eval_function(toString, [])], scope)
+                    print([eval_function(toString, [], scope)], scope)
                 } else {
                     console.log(getRuntimeValue(arg))
                 }

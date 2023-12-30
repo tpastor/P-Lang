@@ -1,5 +1,5 @@
 // test pastot comment
-let c = "test\"test"
+let c = "test\\"test"
 let a = 5
 let b = "test"
 let d = c + b

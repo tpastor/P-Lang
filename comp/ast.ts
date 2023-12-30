@@ -42,9 +42,9 @@ export interface Program extends Stmt {
 export interface VarDeclaration extends Stmt {
   kind: "VarDeclaration";
   constant: boolean,
-  identifier: string,
+  identifier: string[],
   isArray: boolean,
-  value?: Expr,
+  value?: Expr[],
 }
 
 export interface AggregatedExpr extends Stmt {

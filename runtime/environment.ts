@@ -7,8 +7,7 @@ export default class Environment {
     private variables: Map<string, RuntimeVal>;
     private constants: Set<string>;
     public isContinueSet:boolean = false;
-    public isBreakSet:boolean = false; 
-    public returnVal?:RuntimeVal = undefined; 
+    public isBreakSet: boolean = false; 
     public scopeOwner: Stmt|RuntimeVal;
 
     constructor(parentENV?: Environment, scopeOwner: Stmt|RuntimeVal|undefined = undefined) {
@@ -25,6 +24,10 @@ export default class Environment {
     ): RuntimeVal {
         if (this.variables.has(varname)) {
             throw `Cannot declare variable ${varname}. As it already is defined.`;
+        }
+
+        if (!value) {
+            throw `Value null cannot be assigned to any Variable ${varname}.`;
         }
 
         this.variables.set(varname, value);

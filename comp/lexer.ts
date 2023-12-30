@@ -176,6 +176,10 @@ export function tokenize(sourceCode: string): Token[] {
       src.shift()
       let ident = "";
       while (src.length > 0 && src[0] != "\"") {
+        if (src[0] == "\\") {
+          src.shift()
+          ident += src.shift()
+        }
         ident += src.shift()
       }
       src.shift()

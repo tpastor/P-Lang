@@ -27,9 +27,6 @@ import { eval_aggr_expr, eval_array_declaration, eval_function_declaration, eval
 import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
-    if (env.returnVal) {
-        return env.returnVal;
-    }
     switch (astNode.kind) {
         case "NumericLiteral":
             return {

@@ -4,7 +4,7 @@ import { createFunctionExtensions, createNativeFunctionExtensions } from "../nat
 import { createNativeStringFunctions } from "../native-api/string";
 import Environment from "./environment";
 
-  export type ValueType = "null" | "number"|"boolean"|"object"|"native-fn"|"function"|"delegatedCall";
+  export type ValueType = "null" | "number"|"boolean"|"object"|"native-fn"|"function"|"delegatedCall"|"functionReturn";
 
   export interface RuntimeVal {
     type: ValueType;
@@ -29,6 +29,11 @@ import Environment from "./environment";
 
   export interface StringVal extends ObjectVal {  
     value: string,
+  }
+
+  export interface FunctionReturn extends RuntimeVal {  
+    type: "functionReturn";
+    values: RuntimeVal[];
   }
 
   export interface ObjectVal extends RuntimeVal {
@@ -96,6 +101,11 @@ import Environment from "./environment";
 
   export function MK_OBJECT(properties: Map<string, RuntimeVal>) {
     return { type: "object", properties } as ObjectVal;
+  }
+
+
+  export function MK_FUNCTION_RETURN(values: RuntimeVal[]) {
+    return { type: "functionReturn", values } as FunctionReturn;
   }
 
   export function MK_NATIVE_FN(call: FunctionCall) {

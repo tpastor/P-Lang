@@ -7,6 +7,7 @@ print(aa.test2)
 
 let x = [10,20]
 print(x)
+assert(10, x.get(0))
 
 let a = fn test() {
     5 + 5

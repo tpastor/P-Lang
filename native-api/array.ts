@@ -20,28 +20,28 @@ export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, Run
 function map(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_ARRAY(array.map((item) => eval_function(func, [item])))
+        return MK_ARRAY(array.map((item) => eval_function(func, [item], scope)))
     }
 }
 
 function filter(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_ARRAY(array.filter((item) => eval_function(func, [item])))
+        return MK_ARRAY(array.filter((item) => eval_function(func, [item], scope)))
     }
 }
 
 function reduceToNumber(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_NUMBER((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue])) as NumberVal).value)
+        return MK_NUMBER((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue], scope)) as NumberVal).value)
     }
 }
 
 function reduceToString(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_STRING((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue])) as StringVal).value)
+        return MK_STRING((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue], scope)) as StringVal).value)
     }
 }
 

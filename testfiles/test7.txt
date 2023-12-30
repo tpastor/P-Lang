@@ -16,6 +16,8 @@ fn st() {
     5
 }
 
+assert(2, stuff(10,4))
+assert(5, stuff(2,4))
 print(stuff(10,4))  
 print(stuff(2,4))    
 print(stuff(2,2))   

@@ -2,7 +2,7 @@ import exp = require("constants");
 import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { BooleanVal, DelegatedCall, FunctionVal, MK_BOOL, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeString } from "../values";
+import { BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeString } from "../values";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -141,7 +141,8 @@ export function eval_identifier(
     ident: Identifier,
     env: Environment,
 ): RuntimeVal {
-    return env.lookupVar(ident.symbol);
+    const val = env.lookupVar(ident.symbol)
+    return val || MK_NULL();
 }
 
 export function eval_assignment(
@@ -186,25 +187,23 @@ export function eval_body(body: Stmt[], scope: Environment, isBreakContinueEnabl
     let result: RuntimeVal = MK_NULL();
     for (const stmt of body) {
         result = evaluate(stmt, scope);
-        if (scope.returnVal) {
-            return scope.returnVal;
+        if (result.type == "functionReturn") {
+            return result;
         }
         if (isBreakContinueEnabled && scope.isBreakSet) {
-            return;
+            return result;
         }
 
         if (isBreakContinueEnabled && scope.isContinueSet) {
             break;
         }
     }
-
     return result;
 }
 
 export function eval_return(ret: Return, scope: Environment): RuntimeVal {
-    const retVal = ret.returnVal && ret.returnVal.length > 0 ? evaluate(ret.returnVal[0], scope) : MK_NULL();
-    scope.returnVal = retVal;
-    return retVal;
+    const retVal = ret.returnVal && ret.returnVal.length > 0 ? ret.returnVal.map(ret => evaluate(ret, scope)) : [MK_NULL()];
+    return MK_FUNCTION_RETURN(retVal);
 }
 
 export function eval_break_continue(continueBreak: ContinueBreak, scope: Environment): RuntimeVal {
@@ -222,7 +221,14 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     }
 
     if (fn.type == "function") {
-        return eval_function(fn, args);
+        const val = eval_function(fn, args, env);
+        if (val.type == "functionReturn") {
+            const fr = val as FunctionReturn
+            if (fr.values.length == 1) {            
+                return fr.values[0]
+            } 
+        } 
+        return val;
     }
 
     if (fn.type == "delegatedCall" && !(fn as DelegatedCall).areCallerAndCalleeAdded) {
@@ -232,13 +238,13 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
         return call;
     } else if (fn.type == "delegatedCall") {
         const delCal = fn as DelegatedCall;
-        return delCal.combinerFunction((call: RuntimeVal, args: RuntimeVal[]) => eval_function(call, args), delCal.caller, delCal.callee, args);
+        return delCal.combinerFunction((call: RuntimeVal, args: RuntimeVal[]) => eval_function(call, args, env), delCal.caller, delCal.callee, args);
     }
 
     throw "Cannot call value that is not a function: " + JSON.stringify(fn);
 }
 
-export function eval_function(fn: RuntimeVal, args: RuntimeVal[]) {
+export function eval_function(fn: RuntimeVal, args: RuntimeVal[], env:Environment) {
     const func = fn as FunctionVal;
     const scope = new Environment(func.declarationEnv, func);
 
@@ -251,9 +257,8 @@ export function eval_function(fn: RuntimeVal, args: RuntimeVal[]) {
         scope.declareVar(varname, args[i], false);
     }
 
-    const body = eval_body(func.body, scope, false);
-    scope.returnVal = undefined
-    return body;
+    return eval_body(func.body, scope, false);
+
 }
 
 export function eval_if_expr(expr: IfExpr, env: Environment): RuntimeVal {
@@ -265,19 +270,17 @@ export function eval_if_expr(expr: IfExpr, env: Environment): RuntimeVal {
 
     if ((condition as BooleanVal).value) {
         const ret = eval_body(expr.body, env2, true);
-        //propagate return
-        env.returnVal = env2.returnVal;
+        //propagate return        
         env.isBreakSet = env2.isBreakSet;
         env.isContinueSet = env2.isContinueSet;
-        return env2.returnVal || ret;
+        return ret;
     }
     else if (expr.elseBody && expr.elseBody.length > 0) {
         const ret = eval_body(expr.elseBody, env2, true);
         //propagate return
-        env.returnVal = env2.returnVal;
         env.isBreakSet = env2.isBreakSet;
         env.isContinueSet = env2.isContinueSet;
-        return env2.returnVal || ret;
+        return ret;
     }
     else {
         return MK_NULL();
@@ -297,9 +300,8 @@ export function eval_while_expr(expr: WhileExpr, env: Environment): RuntimeVal {
         resp = eval_body(expr.body, env2, true);
         condition = evaluate(expr.condition, env2);
         //propagate return
-        if (env2.returnVal) {
-            env.returnVal = env2.returnVal;
-            return env2.returnVal || resp;
+        if (resp.type == "functionReturn") {
+            return resp;
         }
         //break and continue
         if (env2.isBreakSet) {
@@ -327,9 +329,8 @@ export function eval_for_expr(expr: ForExpr, env: Environment): RuntimeVal {
         evaluate(expr.increment, env2);
         condition = evaluate(expr.condition, env2);
         //propagate return
-        if (env2.returnVal) {
-            env.returnVal = env2.returnVal;
-            return env2.returnVal || resp;
+        if (resp.type == "functionReturn") {
+            return resp;
         }
         //break and continue
         if (env2.isBreakSet) {
