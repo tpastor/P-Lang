@@ -10,6 +10,7 @@ function repl() {
   console.log("Repl v1.0");
   const env = createGlobalEnv();
 
+// sourcery skip: avoid-infinite-loops
   while (true) {
 
     const input = prompt();
@@ -31,20 +32,18 @@ function repl() {
 }
 
 function prompt() {
-  var fs = require("fs");
+  let rval = "";
 
-  var rtnval = "";
-
-  var buffer = Buffer.alloc ? Buffer.alloc(1) : new Buffer(1);
+  const buffer = Buffer.alloc ? Buffer.alloc(1) : new Buffer(1);
 
   for (; ;) {
     fs.readSync(0, buffer, 0, 1);   //0 is fd for stdin
     if (buffer[0] === 10) {   //LF \n   return on line feed
       break;
     } else if (buffer[0] !== 13) {     //CR \r   skip carriage return
-      rtnval += new String(buffer);
+      rval += String(buffer);
     }
   }
 
-  return rtnval;
+  return rval;
 }

@@ -1,6 +1,8 @@
+import { Stmt } from "./comp/ast";
 import Parser from "./comp/parser";
 import { createGlobalEnv } from "./native-api/base";
 import { evaluate } from "./runtime/interpreter";
+import { RuntimeVal } from "./runtime/values";
 const fs = require('fs');
 
 const parser = new Parser();
@@ -13,7 +15,8 @@ fs.readFile('./testfiles/test10.txt', 'utf8', (err, data) => {
   console.log("SOURCE CODE");
   console.log(data);
   const env = createGlobalEnv();
-  const program = parser.produceAST(unbackslash(data));
+  const program:Stmt = parser.produceAST(unbackslash(data));
+  env.scopeOwner = program
   console.log("AST");
   console.log(JSON.stringify(program, replacer, 4));
   console.log("EVALUATE");
@@ -35,10 +38,18 @@ function replacer(key, value) {
 
 function unbackslash(s) {
   return s.replace(/\\([\\rnt'"])/g, function(match, p1) {
-      if (p1 === 'n') return '\n';
-      if (p1 === 'r') return '\r';
-      if (p1 === 't') return '\t';
-      if (p1 === '\\') return '\\';
+      if (p1 === 'n') {
+        return '\n';
+      }
+      if (p1 === 'r') {
+        return '\r';
+      }
+      if (p1 === 't') {
+        return '\t';
+      }
+      if (p1 === '\\') {
+        return '\\';
+      }
       return p1;       // unrecognised escape
   });
 }

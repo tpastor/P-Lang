@@ -141,8 +141,7 @@ export function eval_identifier(
     ident: Identifier,
     env: Environment,
 ): RuntimeVal {
-    const val = env.lookupVar(ident.symbol);
-    return val;
+    return env.lookupVar(ident.symbol);
 }
 
 export function eval_assignment(
@@ -150,7 +149,7 @@ export function eval_assignment(
     env: Environment,
 ): RuntimeVal {
     if (node.assigne.kind !== "Identifier") {
-        throw `Invalid LHS inaide assignment expr ${JSON.stringify(node.assigne)}`;
+        throw `Invalid LHS inside assignment expr ${JSON.stringify(node.assigne)}`;
     }
 
     const varname = (node.assigne as Identifier).symbol;
@@ -182,7 +181,7 @@ export function eval_body(body: Stmt[], scope: Environment, isBreakContinueEnabl
         if (scope.returnVal) {
             return scope.returnVal;
         }
-        if (isBreakContinueEnabled && (scope.isBreakSet)) {
+        if (isBreakContinueEnabled && scope.isBreakSet) {
             return;
         }
 
@@ -233,12 +232,13 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
 
 export function eval_function(fn: RuntimeVal, args: RuntimeVal[]) {
     const func = fn as FunctionVal;
-    const scope = new Environment(func.declarationEnv);
+    const scope = new Environment(func.declarationEnv, func);
 
     // Create the variables for the parameters list
     for (let i = 0; i < func.parameters.length; i++) {
-        // TODO Check the bounds here.
-        // verify arity of function
+        if (func.parameters.length < args.length) {
+            throw "Missing required parameter for function " + JSON.stringify(func.parameters) + "  -  " + JSON.stringify(args) 
+        }
         const varname = func.parameters[i];
         scope.declareVar(varname, args[i], false);
     }
@@ -249,7 +249,7 @@ export function eval_function(fn: RuntimeVal, args: RuntimeVal[]) {
 }
 
 export function eval_if_expr(expr: IfExpr, env: Environment): RuntimeVal {
-    const env2 = new Environment(env);
+    const env2 = new Environment(env, expr);
     const condition = evaluate(expr.condition, env);
     if (condition.type != "boolean") {
         throw "If condition must be boolean: " + JSON.stringify(condition);
@@ -277,7 +277,7 @@ export function eval_if_expr(expr: IfExpr, env: Environment): RuntimeVal {
 }
 
 export function eval_while_expr(expr: WhileExpr, env: Environment): RuntimeVal {
-    const env2 = new Environment(env);
+    const env2 = new Environment(env, expr);
     let condition = evaluate(expr.condition, env);
     if (condition.type != "boolean") {
         throw "If condition must be boolean: " + JSON.stringify(condition);
@@ -304,7 +304,7 @@ export function eval_while_expr(expr: WhileExpr, env: Environment): RuntimeVal {
 
 
 export function eval_for_expr(expr: ForExpr, env: Environment): RuntimeVal {
-    const env2 = new Environment(env);
+    const env2 = new Environment(env, expr);
     let variable = evaluate(expr.var, env2);
     let condition = evaluate(expr.condition, env2);
 

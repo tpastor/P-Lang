@@ -1,3 +1,4 @@
+import { Stmt } from "../comp/ast";
 import { BooleanVal, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, NumberVal, RuntimeVal, StringVal } from "./values";
 
 
@@ -8,11 +9,13 @@ export default class Environment {
     public isContinueSet:boolean = false;
     public isBreakSet:boolean = false; 
     public returnVal?:RuntimeVal = undefined; 
+    public scopeOwner: Stmt|RuntimeVal;
 
-    constructor(parentENV?: Environment) {
+    constructor(parentENV?: Environment, scopeOwner: Stmt|RuntimeVal|undefined = undefined) {
         this.parent = parentENV;
         this.variables = new Map();
         this.constants = new Set();
+        this.scopeOwner = scopeOwner;
     }
 
     public declareVar(

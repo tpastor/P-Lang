@@ -1,9 +1,14 @@
-import { FunctionCall, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, NumberVal, RuntimeVal } from "../runtime/values";
+import { eval_function } from "../runtime/eval/expressions";
+import { FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, RuntimeVal, StringVal } from "../runtime/values";
 
 export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
     stringFunctions.set("length", MK_NATIVE_FN(length(array)))
     stringFunctions.set("get", MK_NATIVE_FN(get(array)))
+    stringFunctions.set("map", MK_NATIVE_FN(map(array)))
+    stringFunctions.set("filter", MK_NATIVE_FN(filter(array)))
+    stringFunctions.set("reduceToNumber", MK_NATIVE_FN(reduceToNumber(array)))
+    stringFunctions.set("reduceToString", MK_NATIVE_FN(reduceToString(array)))
     stringFunctions.set("set", MK_NATIVE_FN(set(array)))
     stringFunctions.set("push", MK_NATIVE_FN(push(array)))
     stringFunctions.set("pop", MK_NATIVE_FN(pop(array)))
@@ -11,6 +16,35 @@ export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, Run
     stringFunctions.set("has", MK_NATIVE_FN(has(array)))
     return stringFunctions;
 } 
+
+function map(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {    
+        const func = args[0] as FunctionVal
+        return MK_ARRAY(array.map((item) => eval_function(func, [item])))
+    }
+}
+
+function filter(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {    
+        const func = args[0] as FunctionVal
+        return MK_ARRAY(array.filter((item) => eval_function(func, [item])))
+    }
+}
+
+function reduceToNumber(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {    
+        const func = args[0] as FunctionVal
+        return MK_NUMBER((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue])) as NumberVal).value)
+    }
+}
+
+function reduceToString(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {    
+        const func = args[0] as FunctionVal
+        return MK_STRING((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue])) as StringVal).value)
+    }
+}
+
 
 function length(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {

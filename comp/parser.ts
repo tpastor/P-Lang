@@ -55,8 +55,7 @@ export default class Parser {
    * Returns the previous token and then advances the tokens array to the next value.
    */
   private eat() {
-    const prev = this.tokens.shift() as Token;
-    return prev;
+    return this.tokens.shift() as Token;
   }
 
 
@@ -140,7 +139,7 @@ export default class Parser {
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
     }
-    return { kind: "ContinueBreak", isContinue: token.value == "continue" ? true : false} as ContinueBreak;
+    return { kind: "ContinueBreak", isContinue: !!(token.value == "continue")} as ContinueBreak;
   }
 
   private parse_for_declaration(): Stmt {
@@ -648,7 +647,7 @@ export default class Parser {
         return {
           kind: "StringLiteral",
           value: this.eat().value,
-        } as StringLiteral;;
+        } as StringLiteral;
       }
 
       // Grouping Expressions
