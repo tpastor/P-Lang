@@ -1,5 +1,6 @@
 import { kill } from "process";
 import {
+  AggregatedExpr,
   ArrayDeclaration,
   AssignmentExpr,
   BinaryExpr,
@@ -118,7 +119,7 @@ export default class Parser {
       case TokenType.Continue:
         return this.parse_break_continue()
       case TokenType.Return:
-        return this.parse_return()  
+        return this.parse_return()
       default:
         return this.parse_expr();
     }
@@ -132,14 +133,14 @@ export default class Parser {
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
     }
-    return {kind: "Return", returnVal: ret} as Return;
+    return { kind: "Return", returnVal: ret } as Return;
   }
   private parse_break_continue(): Stmt {
     const token = this.eat();
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
     }
-    return { kind: "ContinueBreak", isContinue: !!(token.value == "continue")} as ContinueBreak;
+    return { kind: "ContinueBreak", isContinue: !!(token.value == "continue") } as ContinueBreak;
   }
 
   private parse_for_declaration(): Stmt {
@@ -238,15 +239,15 @@ export default class Parser {
       this.expect(
         TokenType.OpenBrace,
         "if expects open bracket"
-      );      
-  
+      );
+
       while (
         this.at().type !== TokenType.EOF &&
         this.at().type !== TokenType.CloseBrace
       ) {
         elseBody.push(this.parse_stmt());
       }
-  
+
       this.expect(
         TokenType.CloseBrace,
         "if expects close bracket"
@@ -302,7 +303,7 @@ export default class Parser {
     } as WhileExpr;
   }
 
-  parse_fn_declaration(): Stmt {
+  parse_fn_declaration(): FunctionDeclaration {
     this.eat();
     const name = this.expect(
       TokenType.Identifier,
@@ -367,7 +368,7 @@ export default class Parser {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
       this.eat()
       this.eat()
-        return { kind: "ArrayDeclaration" } as ArrayDeclaration;
+      return { kind: "ArrayDeclaration" } as ArrayDeclaration;
     }
 
     // { Prop[] }
@@ -380,7 +381,7 @@ export default class Parser {
     const properties = new Array<Property>();
 
     while (this.not_eof() && this.at().type != TokenType.CloseBrace) {
-      
+
       const key = this.at().type == TokenType.Identifier ?
         this.expect(TokenType.Identifier, "Object literal key expected").value
         : this.expect(TokenType.StringMark, "Object literal key expected").value
@@ -458,6 +459,74 @@ export default class Parser {
         constant: isConstant,
         isArray: true
       } as VarDeclaration;
+    }
+
+    if (this.at().type == TokenType.OpenBracket) {
+      this.eat()
+
+      const args = this.parse_arguments_list()
+
+      this.expect(
+        TokenType.CloseBracket,
+        "Expected close bracket token following array identifier in var declaration.",
+      );
+
+      const stmts: Stmt[] = args.map(param => {
+        return {
+          kind: "CallExpr",
+          caller: {
+            kind: "MemberExpr",
+            object: {
+              kind: "Identifier",
+              symbol: identifier,
+            },
+            property: {
+              kind: "Identifier",
+              symbol: "push",
+            },
+            computed: false,
+          },
+          args: [param],
+        } as CallExpr
+      })
+
+      stmts.unshift({
+        kind: "VarDeclaration",
+        identifier,
+        constant: isConstant,
+        isArray: true
+      } as VarDeclaration)
+
+      return {
+        kind: "AggregatedExpr",
+        stmts: stmts,
+      } as AggregatedExpr
+    }
+
+    if (this.at().type == TokenType.Fn) {
+        const func: FunctionDeclaration = this.parse_fn_declaration()
+        const stmts:Stmt[] = [func]
+        stmts.unshift({
+          kind: "VarDeclaration",
+          identifier,
+          constant: isConstant,
+          isArray: true
+        } as VarDeclaration)
+        
+        stmts.push(
+        { value: {
+          kind: "Identifier",
+          symbol: func.name,
+        }, assigne: {
+          kind: "Identifier",
+          symbol: identifier,
+        }, kind: "AssignmentExpr" } as AssignmentExpr);
+
+        return {
+          kind: "AggregatedExpr",
+          stmts: stmts,
+        } as AggregatedExpr
+
     }
 
     const declaration = {
@@ -662,7 +731,7 @@ export default class Parser {
       }
 
       // Unidentified Tokens and Invalid Code Reached
-      default:
+      default:        
         console.error("Unexpected token found during parsing!", this.at());
         process.exit(1);
     }

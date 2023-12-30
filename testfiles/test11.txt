@@ -1,0 +1,10 @@
+let x = [10,20]
+print(x)
+
+let a = fn test() {
+    5 + 5
+}
+
+print(a())
+
+2 + 1

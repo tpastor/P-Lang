@@ -2,12 +2,11 @@ import { Stmt } from "./comp/ast";
 import Parser from "./comp/parser";
 import { createGlobalEnv } from "./native-api/base";
 import { evaluate } from "./runtime/interpreter";
-import { RuntimeVal } from "./runtime/values";
 const fs = require('fs');
 
 const parser = new Parser();
 
-fs.readFile('./testfiles/test10.txt', 'utf8', (err, data) => {
+fs.readFile('./testfiles/test11.txt', 'utf8', (err, data) => {
   if (err) {
     console.error(err);
     return;

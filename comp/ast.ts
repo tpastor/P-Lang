@@ -13,6 +13,7 @@ export type NodeType =
   | "WhileExpr"
   | "ForExpr"
   | "EvaluatedExpr"
+  | "AggregatedExpr"
 
   | "Property"
   | "ContinueBreak"
@@ -44,6 +45,11 @@ export interface VarDeclaration extends Stmt {
   identifier: string,
   isArray: boolean,
   value?: Expr,
+}
+
+export interface AggregatedExpr extends Stmt {
+  kind: "AggregatedExpr";
+  stmts: Stmt[];
 }
 
 export interface FunctionDeclaration extends Stmt {

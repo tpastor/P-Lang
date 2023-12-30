@@ -1,4 +1,4 @@
-  import { ArrayDeclaration, FunctionDeclaration, Program, VarDeclaration } from "../../comp/ast";
+  import { AggregatedExpr, ArrayDeclaration, FunctionDeclaration, Program, VarDeclaration } from "../../comp/ast";
   import { createFunctionExtensions } from "../../native-api/functions";
   import Environment from "../environment";
   import { evaluate } from "../interpreter";
@@ -11,6 +11,14 @@
       if (env.returnVal) {
         process.exit(env.returnVal ? (env.returnVal as NumberVal).value : 0);
       } 
+    }
+    return lastEvaluated;
+  }
+
+  export function eval_aggr_expr(program: AggregatedExpr, env: Environment): RuntimeVal {
+    let lastEvaluated: RuntimeVal = MK_NULL();
+    for (const statement of program.stmts) {
+      lastEvaluated = evaluate(statement, env);      
     }
     return lastEvaluated;
   }

@@ -1,6 +1,6 @@
 import Environment from "../runtime/environment";
 import { eval_call_expr, eval_function } from "../runtime/eval/expressions";
-import { BooleanVal, FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeString } from "../runtime/values";
+import { ArrayVal, BooleanVal, FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
 const fs = require('fs');
 
 export function createGlobalEnv() {
@@ -57,6 +57,12 @@ export function print(args: RuntimeVal[], scope: Environment) {
     args.forEach(arg => {
         switch(arg.type) {
             case "object":
+                const isArray:boolean = isRuntimeArray(arg)
+                if (isArray) {
+                    const array = arg as ArrayVal
+                    console.log("[" + array.array.map(item => getRuntimeValue(item)).join(",") + "]");
+                    break;
+                }
                 const toString:FunctionVal = getObjectToString(arg as ObjectVal)
                 if (toString) {
                     print([eval_function(toString, [])], scope)

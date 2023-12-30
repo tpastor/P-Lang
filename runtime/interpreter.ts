@@ -1,5 +1,6 @@
 import { MK_STRING, NumberVal, RuntimeVal, StringVal } from "./values";
 import {
+    AggregatedExpr,
     ArrayDeclaration,
     AssignmentExpr,
     BinaryExpr,
@@ -22,7 +23,7 @@ import {
     WhileExpr,
 } from "../comp/ast";
 import Environment from "./environment";
-import { eval_array_declaration, eval_function_declaration, eval_program, eval_var_declaration } from "./eval/statements";
+import { eval_aggr_expr, eval_array_declaration, eval_function_declaration, eval_program, eval_var_declaration } from "./eval/statements";
 import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
@@ -70,6 +71,8 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
             return eval_return(astNode as Return, env);    
         case "ContinueBreak":
             return eval_break_continue(astNode as ContinueBreak, env);  
+        case "AggregatedExpr":
+            return eval_aggr_expr(astNode as AggregatedExpr, env);  
         // this is the gate of hell
         case "EvaluatedExpr":
             return (astNode as EvaluatedExpr).evaluatedVal;           

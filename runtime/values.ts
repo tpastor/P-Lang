@@ -102,6 +102,10 @@ import Environment from "./environment";
     return object.type == "object" && 'value' in object;
   }
 
+  export function isRuntimeArray(object: RuntimeVal): boolean {
+    return object.type == "object" && 'array' in object;
+  }
+
   export function getObjectToString(object: ObjectVal): FunctionVal | undefined {
     const toString = object.properties.get("toString")
     if (toString && toString.type == "function") {
