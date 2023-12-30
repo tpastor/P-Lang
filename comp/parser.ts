@@ -418,9 +418,11 @@ export default class Parser {
   }
 
 
-  // LET IDENT;
-  // ( LET | CONST ) IDENT = EXPR;
-  // ( LET | CONST ) IDENT = EXPR[];
+  // LET IDENT(;)
+  // ( LET | CONST ) IDENT = EXPR(;)
+  // ( LET | CONST ) IDENT = EXPR[](;)
+  // ( LET | CONST ) IDENT = EXPR[X,P,T,O](;)
+  // ( LET | CONST ) IDENT = FUNC ....(;)
   parse_var_declaration(): Stmt {
     const isConstant = this.eat().type == TokenType.Const;
     const identifier = this.expect(
@@ -452,6 +454,10 @@ export default class Parser {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
       this.eat()
       this.eat()
+
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat(); 
+      }
 
       return {
         kind: "VarDeclaration",
@@ -497,6 +503,10 @@ export default class Parser {
         isArray: true
       } as VarDeclaration)
 
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat(); 
+      }
+
       return {
         kind: "AggregatedExpr",
         stmts: stmts,
@@ -522,6 +532,10 @@ export default class Parser {
           symbol: identifier,
         }, kind: "AssignmentExpr" } as AssignmentExpr);
 
+        if (this.at().type == TokenType.Semicolon) {
+          this.eat(); 
+        }
+
         return {
           kind: "AggregatedExpr",
           stmts: stmts,
@@ -538,7 +552,7 @@ export default class Parser {
     } as VarDeclaration;
 
     if (this.at().type == TokenType.Semicolon) {
-      this.eat(); // expect semicolon
+      this.eat(); 
     }
 
     return declaration;

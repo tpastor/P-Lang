@@ -6,5 +6,10 @@ let a = fn test() {
 }
 
 print(a())
+assert(10, a())
+
+let q = httpGet("http://google.com")
+print(q.statusCode)
+print(q.getBody("utf-8"))
 
 2 + 1

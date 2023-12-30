@@ -1,4 +1,3 @@
-import { FunctionDeclaration } from "../comp/ast";
 import Environment from "../runtime/environment";
 import { RuntimeVal, MK_NUMBER, MK_NATIVE_FN, FunctionCall, FunctionVal, DelegatedCall, MK_DELEGATED_FUNCTION, EvalFunction } from "../runtime/values";
 

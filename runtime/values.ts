@@ -94,6 +94,10 @@ import Environment from "./environment";
     return { type: "boolean", value: b } as BooleanVal;
   }
 
+  export function MK_OBJECT(properties: Map<string, RuntimeVal>) {
+    return { type: "object", properties } as ObjectVal;
+  }
+
   export function MK_NATIVE_FN(call: FunctionCall) {
     return { type: "native-fn", call, properties: createNativeFunctionExtensions(call) } as NativeFnVal;
   }

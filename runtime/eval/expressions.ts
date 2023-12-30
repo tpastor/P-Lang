@@ -353,6 +353,10 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             val = (expr.property as StringLiteral).value
         }
 
+        if (!objVal.properties.has(val)) {
+            throw "Object " + objVal + " does not have member " + val
+        }
+
         return objVal.properties.get(val)
     } else if (obj.type == "function") {
         const objVal = obj as FunctionVal
@@ -363,6 +367,9 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
 
         if (expr.property.kind == "StringLiteral") {
             val = (expr.property as StringLiteral).value
+        }
+        if (!objVal.properties.has(val)) {
+            throw "Function " + objVal.name + " does not have member " + val
         }
         return objVal.properties.get(val)
     }

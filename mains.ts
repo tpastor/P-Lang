@@ -37,10 +37,10 @@ function prompt() {
   const buffer = Buffer.alloc ? Buffer.alloc(1) : new Buffer(1);
 
   for (; ;) {
-    fs.readSync(0, buffer, 0, 1);   //0 is fd for stdin
-    if (buffer[0] === 10) {   //LF \n   return on line feed
+    fs.readSync(0, buffer, 0, 1);   
+    if (buffer[0] === 10) {   
       break;
-    } else if (buffer[0] !== 13) {     //CR \r   skip carriage return
+    } else if (buffer[0] !== 13) {     
       rval += String(buffer);
     }
   }

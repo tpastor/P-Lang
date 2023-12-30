@@ -3,5 +3,6 @@
     "@types/node": "^20.10.5"
   },
   "dependencies": {
+    "sync-request": "6.1.0"
   }
 }
