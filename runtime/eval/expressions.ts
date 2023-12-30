@@ -2,7 +2,7 @@ import exp = require("constants");
 import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { BooleanVal, FunctionVal, MK_BOOL, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeString } from "../values";
+import { BooleanVal, DelegatedCall, FunctionVal, MK_BOOL, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeString } from "../values";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -218,6 +218,16 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
         return eval_function(fn, args);
     }
 
+    if (fn.type == "delegatedCall" && !(fn as DelegatedCall).areCallersAndCallerAdded) {
+        const call = fn as DelegatedCall;        
+        call.callee = [args[0] as FunctionVal]
+        call.areCallersAndCallerAdded = true
+        return call;
+    } else if (fn.type == "delegatedCall") {
+        const delCal = fn as DelegatedCall;
+        return delCal.combinerFunction((call: RuntimeVal, args: RuntimeVal[]) => eval_function(call, args), delCal.caller, delCal.callee, args);
+    }
+
     throw "Cannot call value that is not a function: " + JSON.stringify(fn);
 }
 
@@ -325,22 +335,35 @@ export function eval_for_expr(expr: ForExpr, env: Environment): RuntimeVal {
 
 export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal {
     let obj = evaluate(expr.object, env);
-    if (obj.type != "object") {
-        throw "Left right side of object member eval must be an object"
-    }
-    const objVal = obj as ObjectVal
-    if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral") {
-        throw "Member must be an identifier/stringLiteral " + JSON.stringify(expr.property)
-    }
+    if (obj.type == "object") {
+        if (obj.type != "object") {
+            throw "Left right side of object member eval must be an object"
+        }
+        const objVal = obj as ObjectVal
+        if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral") {
+            throw "Member must be an identifier/stringLiteral " + JSON.stringify(expr.property)
+        }
 
-    let val;
-    if (expr.property.kind == "Identifier") {
-        val = (expr.property as Identifier).symbol
-    }
+        let val;
+        if (expr.property.kind == "Identifier") {
+            val = (expr.property as Identifier).symbol
+        }
 
-    if (expr.property.kind == "StringLiteral") {
-        val = (expr.property as StringLiteral).value
-    }
+        if (expr.property.kind == "StringLiteral") {
+            val = (expr.property as StringLiteral).value
+        }
 
-    return objVal.properties.get(val)
+        return objVal.properties.get(val)
+    } else if (obj.type == "function") {
+        const objVal = obj as FunctionVal
+        let val;
+        if (expr.property.kind == "Identifier") {
+            val = (expr.property as Identifier).symbol
+        }
+
+        if (expr.property.kind == "StringLiteral") {
+            val = (expr.property as StringLiteral).value
+        }
+        return objVal.properties.get(val)
+    }
 }    

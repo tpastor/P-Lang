@@ -5,6 +5,7 @@ import {
     BinaryExpr,
     CallExpr,
     ContinueBreak,
+    EvaluatedExpr,
     ForExpr,
     FunctionDeclaration,
     Identifier,
@@ -68,7 +69,10 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
         case "Return":
             return eval_return(astNode as Return, env);    
         case "ContinueBreak":
-            return eval_break_continue(astNode as ContinueBreak, env);             
+            return eval_break_continue(astNode as ContinueBreak, env);  
+        // this is the gate of hell
+        case "EvaluatedExpr":
+            return (astNode as EvaluatedExpr).evaluatedVal;           
         default:
             console.error(
                 "This AST Node has not yet been setup for interpretation.",

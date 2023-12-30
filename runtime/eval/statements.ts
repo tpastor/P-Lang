@@ -1,4 +1,5 @@
   import { ArrayDeclaration, FunctionDeclaration, Program, VarDeclaration } from "../../comp/ast";
+  import { createFunctionExtensions } from "../../native-api/functions";
   import Environment from "../environment";
   import { evaluate } from "../interpreter";
   import { FunctionVal, MK_ARRAY, MK_NULL, NumberVal, RuntimeVal } from "../values";
@@ -47,8 +48,10 @@
       name: declaration.name,
       parameters: declaration.parameters,
       declarationEnv: env,
-      body: declaration.body,
+      body: declaration.body,      
     } as FunctionVal;
+
+    fn.properties = createFunctionExtensions(fn, env)
   
     return env.declareVar(declaration.name, fn, true);
   }

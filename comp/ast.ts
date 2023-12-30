@@ -1,3 +1,5 @@
+import { RuntimeVal } from "../runtime/values";
+
 export type NodeType =
   | "Program"
   | "VarDeclaration"
@@ -10,6 +12,7 @@ export type NodeType =
   | "IfExpr"
   | "WhileExpr"
   | "ForExpr"
+  | "EvaluatedExpr"
 
   | "Property"
   | "ContinueBreak"
@@ -73,6 +76,12 @@ export interface CallExpr extends Expr {
   kind: "CallExpr";
   args: Expr[];
   caller: Expr;
+}
+
+
+export interface EvaluatedExpr extends Expr {
+  kind: "EvaluatedExpr";
+  evaluatedVal: RuntimeVal
 }
 
 export interface IfExpr extends Expr {

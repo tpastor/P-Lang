@@ -1,0 +1,18 @@
+fn test() {
+    5 + 5
+}
+
+fn secondTest(x) {
+    5 + 10 + x
+}
+
+let a = test;
+let b = secondTest;
+
+let c = a.paramCount
+print(c)
+
+let d = a.andThen(b)
+print(d())
+
+2 + 1
