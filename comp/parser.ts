@@ -11,6 +11,7 @@ import {
   Identifier,
   IfExpr,
   MemberExpr,
+  NativeBlock,
   NumericLiteral,
   ObjectLiteral,
   Program,
@@ -122,6 +123,16 @@ export default class Parser {
       default:
         return this.parse_expr();
     }
+  }
+
+  private parse_negation(): Stmt {
+    this.eat();
+    const op =this.parse_expr()
+    return {
+      kind: "UnaryExpr",
+      left: op,
+      operator: "!",
+    } as UnaryExpr;
   }
   private parse_return(): Stmt {
     this.eat();
@@ -305,6 +316,12 @@ export default class Parser {
   parse_fn_declaration(): FunctionDeclaration {
     this.eat();
 
+    let isNative = false;
+    if (this.at().type == TokenType.Native) {
+      this.eat()
+      isNative = true;
+    }
+
     let name = undefined
     if (this.at().type == TokenType.Identifier) {
       name = this.expect(
@@ -317,7 +334,6 @@ export default class Parser {
     const params: string[] = [];
     for (const arg of args) {
       if (arg.kind !== "Identifier") {
-        console.log(arg);
         throw "Inside function declaration expected parameters to be of type string.";
       }
 
@@ -330,11 +346,19 @@ export default class Parser {
     );
     const body: Stmt[] = [];
 
-    while (
-      this.at().type !== TokenType.EOF &&
-      this.at().type !== TokenType.CloseBrace
-    ) {
-      body.push(this.parse_stmt());
+    if (isNative) {
+      let ident = ""
+      if (this.at().type == TokenType.NativeBlock) {
+        ident = this.eat().value
+      }    
+      body.push({kind: "NativeBlock", parameters: args, sourceCode: ident} as NativeBlock)
+    } else {
+      while (
+        this.at().type !== TokenType.EOF &&
+        this.at().type !== TokenType.CloseBrace
+      ) {
+        body.push(this.parse_stmt());
+      }
     }
 
     this.expect(
@@ -759,6 +783,10 @@ export default class Parser {
           kind: "StringLiteral",
           value: this.eat().value,
         } as StringLiteral;
+      }
+
+      case TokenType.Negation: {
+        return this.parse_negation()
       }
 
       // Grouping Expressions

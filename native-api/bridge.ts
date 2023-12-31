@@ -1,4 +1,4 @@
-import { ArrayVal, BooleanVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../runtime/values";
+import { ArrayVal, BooleanVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../runtime/values";
 import { getRuntimeValue } from "./base";
 
 const denyListMethods = new Set(["constructor", "__defineGetter__", "__defineSetter__", "hasOwnProperty", "isPrototypeOf", "__lookupGetter__",
@@ -10,6 +10,26 @@ export function convertNativeIntoObject(obj): RuntimeVal {
 
 export function convertObjectIntoNative(val: ObjectVal) {
     return Object.fromEntries(convertObjectIntoMap(val))
+}
+
+export function convertAnyNativeIntoRuntimeVal(val): RuntimeVal {
+    if (typeof val == "string") {
+        return MK_STRING((val as string))
+    }
+    else if (typeof val == "number") {
+        return MK_NUMBER((val as number))
+    }
+    else if (typeof val == "boolean") {
+        return MK_BOOL((val as boolean))
+    }
+    else if (typeof val == "function") {
+        return MK_NATIVE_FN((call) => (val as Function).call(null, ...call.map((rv) => getRuntimeValue(rv))))
+    }
+    else if (typeof val == "object") {
+        return MK_OBJECT(convertNativeObjectIntoMap(val))
+    } else {
+        return MK_NULL()
+    }
 }
 
 export function convertAnyRuntimeValIntoNative(val: RuntimeVal) {

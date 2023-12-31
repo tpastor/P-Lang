@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const parser = new Parser();
 
-fs.readFile('./testfiles/test15.txt', 'utf8', (err, data) => {
+fs.readFile('./testfiles/test16.txt', 'utf8', (err, data) => {
   if (err) {
     console.error(err);
     return;
@@ -28,7 +28,7 @@ function replacer(key, value) {
   if (value instanceof Map) {
     return {
       dataType: 'Map',
-      value: Array.from(value.entries()), // or with spread: value: [...value]
+      value: Array.from(value.entries()), 
     };
   } else {
     return value;
@@ -49,6 +49,6 @@ function unbackslash(s) {
       if (p1 === '\\') {
         return '\\';
       }
-      return p1;       // unrecognised escape
+      return p1;  
   });
 }

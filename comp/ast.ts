@@ -21,8 +21,10 @@ export type NodeType =
   | "ObjectLiteral"
   | "NumericLiteral"
   | "StringLiteral"
+  | "NativeBlock"
   | "Identifier"
   | "UnaryExpr"
+  | "NegationExpr"
   | "BinaryExpr";
 
 export interface Stmt {
@@ -56,7 +58,8 @@ export interface FunctionDeclaration extends Stmt {
   kind: "FunctionDeclaration";
   parameters: string[],
   name: string,
-  body: Stmt[]
+  body: Stmt[],
+  isNative: boolean
 }
 
 
@@ -75,7 +78,6 @@ export interface BinaryExpr extends Expr {
   left: Expr;
   right: Expr;
   operator: string; // needs to be of type BinaryOperator
-
 }
 
 export interface CallExpr extends Expr {
@@ -118,6 +120,11 @@ export interface MemberExpr extends Expr {
   computed: boolean;
 }
 
+export interface NativeBlock extends Expr {
+  kind: "NativeBlock";
+  parameters: Identifier[]
+  sourceCode: string
+}
 
 export interface BinaryExpr extends Expr {
   kind: "BinaryExpr";
@@ -168,7 +175,6 @@ export interface ContinueBreak extends Expr {
   kind: "ContinueBreak";
   isContinue: boolean
 }
-
 
 export interface Return extends Expr {
   kind: "Return";

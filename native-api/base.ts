@@ -10,6 +10,7 @@ export function createGlobalEnv() {
     env.declareVar("true", MK_BOOL(true), true);
     env.declareVar("false", MK_BOOL(false), true);
     env.declareVar("null", MK_NULL(), true);
+    env.declareVar("sleep", MK_NATIVE_FN(sleep), true)
     env.declareVar("print", MK_NATIVE_FN(print), true)
     env.declareVar("system", MK_NATIVE_FN(system), true)
     env.declareVar("listObjectProps", MK_NATIVE_FN(list), true)
@@ -42,7 +43,7 @@ export function array(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY(args)
 };
 
-export function httpGet(args: RuntimeVal[], scope: Environment): RuntimeVal  {
+export function httpGet(args: RuntimeVal[], scope: Environment): RuntimeVal {
     return convertNativeIntoObject(makeGet((args[0] as StringVal).value))
 }
 
@@ -86,6 +87,12 @@ export function system(args: RuntimeVal[], scope: Environment) {
     return MK_STRING(require('child_process').execSync('node -v').toString());
 }
 
+export function sleep(args: RuntimeVal[], scope: Environment) {
+    const {execSync} = require('child_process');
+    execSync('sleep ' + (args[0] as NumberVal).value);
+    return MK_NULL()
+}
+
 export function print(args: RuntimeVal[], scope: Environment) {
     args.forEach(arg => {
         switch (arg.type) {
@@ -123,7 +130,7 @@ export function getRuntimeValue(val: RuntimeVal) {
             return (val as BooleanVal).value
         case "object":
             return isRuntimeString(val) ? (val as StringVal).value : val;
-        case "null":    
+        case "null":
             return null
         default:
             throw "Element does not have a runtime value " + JSON.stringify(val)

@@ -11,6 +11,8 @@ export enum TokenType {
   Let,
   Const,
   Fn,
+  Native,
+  NativeBlock,
   
   If,
   Else,
@@ -19,6 +21,7 @@ export enum TokenType {
   Break,
   Continue,
   Return,
+  Negation,
 
   // Grouping * Operators
   BinaryOperator,
@@ -47,7 +50,8 @@ const KEYWORDS: Record<string, TokenType> = {
   break: TokenType.Break,
   continue: TokenType.Continue,
   return: TokenType.Return,
-  else: TokenType.Else
+  else: TokenType.Else,
+  native: TokenType.Native,
 };
 
 // Represents a single token from the source-code.
@@ -61,9 +65,21 @@ function token(value = "", type: TokenType): Token {
   return { value, type };
 }
 
-function isalphanumeric(src: string) {
-  return isalpha(src) || isint(src);
-}
+function isalphanumeric(str) {
+  var code, i, len;
+
+  for (i = 0, len = str.length; i < len; i++) {
+    code = str.charCodeAt(i);
+    if (!(code > 47 && code < 58) && // numeric (0-9)
+        !(code > 64 && code < 91) && // upper alpha (A-Z)
+        !(code == "_".charCodeAt(0)) && // _
+        !(code > 96 && code < 123)) { // lower alpha (a-z)
+      return false;
+    }
+  }
+  return true;
+};
+
 
 /**
  * Returns whether the character passed in alphabetic -> [a-zA-Z]
@@ -144,7 +160,17 @@ export function tokenize(sourceCode: string): Token[] {
       src.shift()
       src.shift()
       tokens.push(token("--", TokenType.BinaryOperator));
-    }
+    } else if (src.length > 1 && src[0] == "%" && src[1] == "%") {
+      src.shift()
+      src.shift()
+      let ident = "";
+      while (src.length > 1 && !(src[0] == "%" && src[1] == "%")) {
+        ident += src.shift()
+      }
+      src.shift()
+      src.shift()
+      tokens.push(token(ident, TokenType.NativeBlock));
+    } 
     // HANDLE BINARY OPERATORS
     else if (
       src[0] == "+" || src[0] == "-" || src[0] == "*" || src[0] == "/" ||
@@ -189,6 +215,10 @@ export function tokenize(sourceCode: string): Token[] {
       }
       src.shift()
       tokens.push(token(ident, TokenType.StringMark));
+    }
+    else if (src[0] == "!") {
+      src.shift()
+      tokens.push(token("!", TokenType.Negation));
     }
     else if (isint(src[0])) {
       let num = "";

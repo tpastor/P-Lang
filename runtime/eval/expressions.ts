@@ -1,8 +1,9 @@
 import exp = require("constants");
-import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
+import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
+import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative } from "../../native-api/bridge";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -74,27 +75,36 @@ export function eval_unary_expr(
     op: UnaryExpr,
     env: Environment,
 ): RuntimeVal {
-    if (op.left.kind != "Identifier") {
-        throw "Unary must be used with identifiers only"
-    }
 
-    const { symbol } = op.left as Identifier
-    const variableVal = env.lookupVar(symbol);
-
-    if (variableVal.type != "number") {
-        throw "Unary must be used with numbers only"
-    }
-
-    const numberVal = variableVal as NumberVal
-
-    if (op.operator == "++") {
-        numberVal.value += 1;
-        return env.assignVar(symbol, numberVal);
-    } else if (op.operator == "--") {
-        numberVal.value -= 1;
-        return env.assignVar(symbol, numberVal);
+    if (op.operator == "!") {
+        const val = evaluate(op.left, env)
+        if (val.type != "boolean") {
+            throw "Negation must be used with boolean only"
+        }
+        return MK_BOOL(!(val as BooleanVal).value)
     } else {
-        throw "Unary operator not supported" + JSON.stringify(op)
+        if (op.left.kind != "Identifier") {
+            throw "Unary must be used with identifiers only"
+        }
+
+        const { symbol } = op.left as Identifier
+        const variableVal = env.lookupVar(symbol);
+
+        if (variableVal.type != "number") {
+            throw "Unary must be used with numbers only"
+        }
+
+        const numberVal = variableVal as NumberVal
+
+        if (op.operator == "++") {
+            numberVal.value += 1;
+            return env.assignVar(symbol, numberVal);
+        } else if (op.operator == "--") {
+            numberVal.value -= 1;
+            return env.assignVar(symbol, numberVal);
+        } else {
+            throw "Unary operator not supported" + JSON.stringify(op)
+        }
     }
 }
 export function eval_binary_expr(
@@ -151,7 +161,7 @@ export function eval_assignment(
     node: AssignmentExpr,
     env: Environment,
 ): RuntimeVal {
-    if (node.assigne.kind !== "Identifier" && node.assigne.kind !== "MemberExpr") {    
+    if (node.assigne.kind !== "Identifier" && node.assigne.kind !== "MemberExpr") {
         throw `Invalid LHS (must be identifier of member expression) inside assignment expr ${JSON.stringify(node.assigne)}`;
     }
 
@@ -165,7 +175,7 @@ export function eval_assignment(
         } else {
             obj.properties.set((target.property as Identifier).symbol, value)
         }
-        return value;        
+        return value;
     } else {
         const varname = (node.assigne as Identifier).symbol;
         return env.assignVar(varname, evaluate(node.value, env));
@@ -231,15 +241,15 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
         const val = eval_function(fn, args, env);
         if (val.type == "functionReturn") {
             const fr = val as FunctionReturn
-            if (fr.values.length == 1) {            
+            if (fr.values.length == 1) {
                 return fr.values[0]
-            } 
-        } 
+            }
+        }
         return val;
     }
 
     if (fn.type == "delegatedCall" && !(fn as DelegatedCall).areCallerAndCalleeAdded) {
-        const call = fn as DelegatedCall;        
+        const call = fn as DelegatedCall;
         call.callee = [args[0] as FunctionVal]
         call.areCallerAndCalleeAdded = true
         return call;
@@ -251,14 +261,14 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     throw "Cannot call value that is not a function: " + JSON.stringify(fn);
 }
 
-export function eval_function(fn: RuntimeVal, args: RuntimeVal[], env:Environment) {
+export function eval_function(fn: RuntimeVal, args: RuntimeVal[], env: Environment) {
     const func = fn as FunctionVal;
     const scope = new Environment(func.declarationEnv, func);
 
     // Create the variables for the parameters list
     for (let i = 0; i < func.parameters.length; i++) {
         if (func.parameters.length < args.length) {
-            throw "Missing required parameter for function " + JSON.stringify(func.parameters) + "  -  " + JSON.stringify(args) 
+            throw "Missing required parameter for function " + JSON.stringify(func.parameters) + "  -  " + JSON.stringify(args)
         }
         const varname = func.parameters[i];
         scope.declareVar(varname, args[i], false);
@@ -391,4 +401,12 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
         }
         return objVal.properties.get(val)
     }
-}    
+}
+
+export function eval_native_block(declaration: NativeBlock, env: Environment): RuntimeVal {
+    const nativeParams = declaration.parameters.map(v => ({ name: v.symbol, value: env.lookupVar(v.symbol) })).map(obj => ({ name: obj.name, value: convertAnyRuntimeValIntoNative(obj.value) }))
+        .map(obj => "let " + obj.name + " = " + obj.value).join(";")
+    let code = "(function() { " + nativeParams + ";" + declaration.sourceCode + '}())';
+    const resp = eval(code)
+    return convertAnyNativeIntoRuntimeVal(resp)
+}

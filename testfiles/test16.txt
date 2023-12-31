@@ -1,0 +1,25 @@
+
+let a = fn native(a, b) {
+    %%
+    const currentDate = new Date();
+    console.log(currentDate)
+    return { "add": a + b + 1, "extra": currentDate }
+    %%
+} 
+
+let x_y = a(5,10)
+assert(x_y.add, 16)
+print(x_y)
+
+let z = !(10 == 5)
+assert(true, z)
+
+let w = !(10 == 10)
+assert(false, w)
+
+let x = !true
+assert(x, false)
+
+print("now " + time())
+sleep(1)
+print("after " + time())
