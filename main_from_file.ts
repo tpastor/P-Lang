@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const parser = new Parser();
 
-fs.readFile('./testfiles/test2.txt', 'utf8', (err, data) => {
+fs.readFile('./testfiles/test14.txt', 'utf8', (err, data) => {
   if (err) {
     console.error(err);
     return;

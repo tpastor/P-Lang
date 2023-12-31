@@ -13,6 +13,7 @@ export enum TokenType {
   Let,
   Const,
   Fn,
+  
   If,
   Else,
   While,

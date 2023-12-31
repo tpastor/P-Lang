@@ -1,0 +1,33 @@
+let x = {
+    val : "thiago",
+    func: fn () { return 1 },
+    val2: "test"
+}
+
+let y = {
+    val2 : "thiago2",
+    func2: fn () { return 1 },
+    val3: "test"
+}
+
+let z = mergeObj(x,y)
+
+assert(z.val, "thiago")
+assert(z.func(), 1)
+assert(z.val2, "thiago2")
+
+assert(z["val3"], "test")
+
+remotePropObj(z, "val3")
+
+assert(z["val3"], null)
+
+assert(z.val3, null)
+
+print(z.val2)
+
+let t = listObjectProps(z)
+print(t)
+assert(t.has("val"), true)
+assert(t.has("func"), true)
+assert(t.has("stuff"), false)

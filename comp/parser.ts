@@ -305,10 +305,14 @@ export default class Parser {
 
   parse_fn_declaration(): FunctionDeclaration {
     this.eat();
-    const name = this.expect(
-      TokenType.Identifier,
-      "Expected function name following fn keyword"
-    ).value;
+
+    let name = undefined
+    if (this.at().type == TokenType.Identifier) {
+      name = this.expect(
+        TokenType.Identifier,
+        "Expected function name following fn keyword"
+      ).value;
+    }
 
     const args = this.parse_args();
     const params: string[] = [];
@@ -341,10 +345,22 @@ export default class Parser {
 
     return {
       body,
-      name,
+      name: name || this.generateFunctionName(20),
       parameters: params,
       kind: "FunctionDeclaration",
     } as FunctionDeclaration;
+  }
+
+  private generateFunctionName(length) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length - 2) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return "__" + result;
   }
 
 
@@ -455,7 +471,7 @@ export default class Parser {
       this.eat()
 
       if (this.at().type == TokenType.Semicolon) {
-        this.eat(); 
+        this.eat();
       }
 
       return {
@@ -503,7 +519,7 @@ export default class Parser {
       } as VarDeclaration)
 
       if (this.at().type == TokenType.Semicolon) {
-        this.eat(); 
+        this.eat();
       }
 
       return {
@@ -513,33 +529,35 @@ export default class Parser {
     }
 
     if (this.at().type == TokenType.Fn) {
-        const func: FunctionDeclaration = this.parse_fn_declaration()
-        const stmts:Stmt[] = [func]
+      const func: FunctionDeclaration = this.parse_fn_declaration()
+      const stmts: Stmt[] = [func]
 
-        stmts.unshift({
-          kind: "VarDeclaration",
-          identifier: [identifier],
-          constant: isConstant,
-          isArray: false
-        } as VarDeclaration)  
-        
-        stmts.push(
-        { value: {
-          kind: "Identifier",
-          symbol: func.name,
-        }, assigne: {
-          kind: "Identifier",
-          symbol: identifier,
-        }, kind: "AssignmentExpr" } as AssignmentExpr);
+      stmts.unshift({
+        kind: "VarDeclaration",
+        identifier: [identifier],
+        constant: isConstant,
+        isArray: false
+      } as VarDeclaration)
 
-        if (this.at().type == TokenType.Semicolon) {
-          this.eat(); 
-        }
+      stmts.push(
+        {
+          value: {
+            kind: "Identifier",
+            symbol: func.name,
+          }, assigne: {
+            kind: "Identifier",
+            symbol: identifier,
+          }, kind: "AssignmentExpr"
+        } as AssignmentExpr);
 
-        return {
-          kind: "AggregatedExpr",
-          stmts: stmts,
-        } as AggregatedExpr
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat();
+      }
+
+      return {
+        kind: "AggregatedExpr",
+        stmts: stmts,
+      } as AggregatedExpr
 
     }
 
@@ -553,7 +571,7 @@ export default class Parser {
     } as VarDeclaration;
 
     if (this.at().type == TokenType.Semicolon) {
-      this.eat(); 
+      this.eat();
     }
 
     return declaration;
@@ -755,8 +773,12 @@ export default class Parser {
         return value;
       }
 
+      case TokenType.Fn: {
+        return this.parse_fn_declaration()
+      }
+
       // Unidentified Tokens and Invalid Code Reached
-      default:        
+      default:
         console.error("Unexpected token found during parsing!", this.at());
         process.exit(1);
     }

@@ -1,6 +1,6 @@
 import Environment from "../runtime/environment";
 import { eval_function } from "../runtime/eval/expressions";
-import { ArrayVal, BooleanVal, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
+import { ArrayVal, BooleanVal, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
 import { convertNativeIntoObject } from "./bridge";
 import { makeGet, makePost } from "./http";
 const fs = require('fs');
@@ -11,6 +11,9 @@ export function createGlobalEnv() {
     env.declareVar("false", MK_BOOL(false), true);
     env.declareVar("null", MK_NULL(), true);
     env.declareVar("print", MK_NATIVE_FN(print), true)
+    env.declareVar("listObjectProps", MK_NATIVE_FN(list), true)
+    env.declareVar("mergeObj", MK_NATIVE_FN(merge), true)
+    env.declareVar("remotePropObj", MK_NATIVE_FN(remove), true)
     env.declareVar("httpGet", MK_NATIVE_FN(httpGet), true)
     env.declareVar("httpPost", MK_NATIVE_FN(httpPost), true)
     env.declareVar("readFile", MK_NATIVE_FN(readFile), true)
@@ -65,6 +68,19 @@ export function writeFile(args: RuntimeVal[], scope: Environment) {
     return MK_NULL()
 };
 
+export function remove(args: RuntimeVal[], scope: Environment) {
+    (args[0] as ObjectVal).properties.delete((args[1] as StringVal).value)
+    return args[0]
+}
+
+export function list(args: RuntimeVal[], scope: Environment) {
+    return MK_ARRAY([...(args[0] as ObjectVal).properties.keys()].map(key => MK_STRING(key)))
+}
+
+export function merge(args: RuntimeVal[], scope: Environment) {
+    return MK_OBJECT(args.map(rt => rt as ObjectVal).map(obj => obj.properties).reduce((accum, newVal) => new Map([...accum.entries(), ...newVal.entries()]), new Map<string, RuntimeVal>()))
+}
+
 export function print(args: RuntimeVal[], scope: Environment) {
     args.forEach(arg => {
         switch (arg.type) {
@@ -102,6 +118,8 @@ export function getRuntimeValue(val: RuntimeVal) {
             return (val as BooleanVal).value
         case "object":
             return isRuntimeString(val) ? (val as StringVal).value : val;
+        case "null":    
+            return null
         default:
             throw "Element does not have a runtime value " + JSON.stringify(val)
     }

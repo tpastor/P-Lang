@@ -64,6 +64,7 @@
     declaration: FunctionDeclaration,
     env: Environment
   ): RuntimeVal {
+
     // Create new function scope
     const fn = {
       type: "function",

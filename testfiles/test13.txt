@@ -1,0 +1,10 @@
+let x = {
+    val : "thiago",
+    func: fn test() { return 1 },
+    val2: "test"
+}
+
+assert(x.val, "thiago")
+assert(x.func(), 1)
+
+print(x.val2)

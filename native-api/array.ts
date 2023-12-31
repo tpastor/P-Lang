@@ -1,5 +1,6 @@
 import { eval_function } from "../runtime/eval/expressions";
 import { FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, RuntimeVal, StringVal } from "../runtime/values";
+import { getRuntimeValue } from "./base";
 
 export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
@@ -106,7 +107,7 @@ function has(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {
         if (args.length != 1) {
             throw "has must have one parameter" + JSON.stringify(args)
-        }
-        return MK_BOOL(array.indexOf(args[0]) > 0);
+        }        
+        return MK_BOOL(array.map(item => JSON.stringify(item)).includes(JSON.stringify(args[0])));
     }
 }

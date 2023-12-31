@@ -3,7 +3,9 @@ print(aa.test)
 aa.test = "variable2"
 aa.test2 = "variable3"
 print(aa.test)
+assert(aa.test, "variable2")
 print(aa.test2)
+assert(aa.test2, "variable3")
 
 let x = [10,20]
 print(x)
