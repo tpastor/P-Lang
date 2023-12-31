@@ -90,6 +90,12 @@ function isint(str: string) {
   return c >= bounds[0] && c <= bounds[1];
 }
 
+function isnumber(str: string) {
+  const c = str.charCodeAt(0);
+  const bounds = ["0".charCodeAt(0), "9".charCodeAt(0)];
+  return c == ".".charCodeAt(0) || (c >= bounds[0] && c <= bounds[1]);
+}
+
 export function tokenize(sourceCode: string): Token[] {
   const tokens = new Array<Token>();
   const src = sourceCode.split(/(?!$)/u);
@@ -188,7 +194,7 @@ export function tokenize(sourceCode: string): Token[] {
     }
     else if (isint(src[0])) {
       let num = "";
-      while (src.length > 0 && isint(src[0])) {
+      while (src.length > 0 && isnumber(src[0])) {
         num += src.shift();
       }
 

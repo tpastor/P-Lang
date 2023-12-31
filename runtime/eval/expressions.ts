@@ -1,8 +1,8 @@
 import exp = require("constants");
-import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
+import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeString } from "../values";
+import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -157,7 +157,12 @@ export function eval_assignment(
         const target = node.assigne as MemberExpr
         const obj: ObjectVal = evaluate(target.object, env) as ObjectVal
         const value = evaluate(node.value, env)
-        obj.properties.set((target.property as Identifier).symbol, value)
+        if (isRuntimeArray(obj)) {
+            const arr = obj as ArrayVal
+            arr.array[(target.property as NumericLiteral).value] = value
+        } else {
+            obj.properties.set((target.property as Identifier).symbol, value)
+        }
         return value;        
     } else {
         const varname = (node.assigne as Identifier).symbol;
@@ -349,8 +354,14 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             throw "Left right side of object member eval must be an object"
         }
         const objVal = obj as ObjectVal
-        if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral") {
-            throw "Member must be an identifier/stringLiteral " + JSON.stringify(expr.property)
+        if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral" && (expr.property.kind != "NumericLiteral" && isRuntimeArray(objVal))) {
+            throw "Member must be an identifier/stringLiteral/numerical " + JSON.stringify(expr.property)
+        }
+
+        if (expr.property.kind == "NumericLiteral") {
+            const num = (expr.property as NumericLiteral).value
+            const arrayVal = obj as ArrayVal
+            return arrayVal.array[num]
         }
 
         let val;
