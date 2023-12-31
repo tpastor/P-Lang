@@ -1,5 +1,3 @@
-import { EOL } from "os";
-
 export enum TokenType {
   // Literal Types
   Null,

@@ -1,6 +1,6 @@
-import { FunctionDeclaration, Stmt } from "../comp/ast";
+import { Stmt } from "../comp/ast";
 import { createNativeArrayFunctions } from "../native-api/array";
-import { createFunctionExtensions, createNativeFunctionExtensions } from "../native-api/functions";
+import { createNativeFunctionExtensions } from "../native-api/functions";
 import { createNativeStringFunctions } from "../native-api/string";
 import Environment from "./environment";
 

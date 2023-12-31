@@ -1,5 +1,5 @@
 import Environment from "../runtime/environment";
-import { RuntimeVal, MK_NUMBER, MK_NATIVE_FN, FunctionCall, FunctionVal, DelegatedCall, MK_DELEGATED_FUNCTION, EvalFunction } from "../runtime/values";
+import { RuntimeVal, MK_NUMBER, FunctionCall, FunctionVal, MK_DELEGATED_FUNCTION, EvalFunction } from "../runtime/values";
 
 export function createFunctionExtensions(call: FunctionVal, env: Environment): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();

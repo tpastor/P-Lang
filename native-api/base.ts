@@ -11,6 +11,7 @@ export function createGlobalEnv() {
     env.declareVar("false", MK_BOOL(false), true);
     env.declareVar("null", MK_NULL(), true);
     env.declareVar("print", MK_NATIVE_FN(print), true)
+    env.declareVar("system", MK_NATIVE_FN(system), true)
     env.declareVar("listObjectProps", MK_NATIVE_FN(list), true)
     env.declareVar("mergeObj", MK_NATIVE_FN(merge), true)
     env.declareVar("remotePropObj", MK_NATIVE_FN(remove), true)
@@ -79,6 +80,10 @@ export function list(args: RuntimeVal[], scope: Environment) {
 
 export function merge(args: RuntimeVal[], scope: Environment) {
     return MK_OBJECT(args.map(rt => rt as ObjectVal).map(obj => obj.properties).reduce((accum, newVal) => new Map([...accum.entries(), ...newVal.entries()]), new Map<string, RuntimeVal>()))
+}
+
+export function system(args: RuntimeVal[], scope: Environment) {
+    return MK_STRING(require('child_process').execSync('node -v').toString());
 }
 
 export function print(args: RuntimeVal[], scope: Environment) {

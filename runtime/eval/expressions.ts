@@ -2,7 +2,7 @@ import exp = require("constants");
 import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
+import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -10,7 +10,9 @@ function eval_numeric_binary_expr(
     operator: string,
 ): NumberVal {
     let result: number;
-    if (operator == "+") {
+    if (operator == "%") {
+        result = lhs.value % rhs.value;
+    } else if (operator == "+") {
         result = lhs.value + rhs.value;
     } else if (operator == "-") {
         result = lhs.value - rhs.value;
@@ -20,7 +22,7 @@ function eval_numeric_binary_expr(
         // TODO: Division by zero checks
         result = lhs.value / rhs.value;
     } else {
-        result = lhs.value % rhs.value;
+        throw "Unknown operator " + operator + " on " + lhs + " " + rhs
     }
 
     return { value: result, type: "number" };

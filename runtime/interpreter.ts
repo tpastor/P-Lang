@@ -1,4 +1,4 @@
-import { MK_STRING, NumberVal, RuntimeVal, StringVal } from "./values";
+import { MK_STRING, NumberVal, RuntimeVal } from "./values";
 import {
     AggregatedExpr,
     ArrayDeclaration,

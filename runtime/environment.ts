@@ -1,5 +1,5 @@
 import { Stmt } from "../comp/ast";
-import { BooleanVal, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, NumberVal, RuntimeVal, StringVal } from "./values";
+import { RuntimeVal } from "./values";
 
 
 export default class Environment {

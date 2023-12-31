@@ -1,4 +1,3 @@
-import { kill } from "process";
 import {
   AggregatedExpr,
   ArrayDeclaration,
