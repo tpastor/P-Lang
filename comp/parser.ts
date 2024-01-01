@@ -6,6 +6,7 @@ import {
   CallExpr,
   ContinueBreak,
   Expr,
+  ForeachExpr,
   ForExpr,
   FunctionDeclaration,
   Identifier,
@@ -106,6 +107,8 @@ export default class Parser {
     switch (this.at().type) {
       case TokenType.For:
         return this.parse_for_declaration();
+      case TokenType.Foreach:
+          return this.parse_foreach_declaration();
       case TokenType.While:
         return this.parse_while_declaration();
       case TokenType.If:
@@ -182,7 +185,7 @@ export default class Parser {
 
     this.expect(
       TokenType.OpenBrace,
-      "if expects open bracket"
+      "for expects open bracket"
     );
 
     const body: Stmt[] = [];
@@ -196,7 +199,7 @@ export default class Parser {
 
     this.expect(
       TokenType.CloseBrace,
-      "if expects close bracket"
+      "for expects close bracket"
     );
 
     return {
@@ -206,6 +209,62 @@ export default class Parser {
       body: body,
       kind: "ForExpr",
     } as ForExpr;
+
+  }
+
+  private parse_foreach_declaration(): Stmt {
+    this.eat();
+    this.expect(
+      TokenType.OpenParen,
+      "for expects open parenthesis"
+    );
+
+    const variable = this.parse_stmt();
+
+    const forin = this.expect(
+      TokenType.Identifier,
+      "foreach expects in"
+    );
+
+    if (forin.value != "in") {
+      throw "foreach missing in"
+    }
+
+    const iterable: Identifier = { kind: "Identifier", symbol: this.expect(
+      TokenType.Identifier,
+      "foreach expects iterable"
+    ).value } as Identifier;
+  
+    this.expect(
+      TokenType.CloseParen,
+      "foreach expects close paren"
+    );
+
+    this.expect(
+      TokenType.OpenBrace,
+      "foreach expects open bracket"
+    );
+
+    const body: Stmt[] = [];
+
+    while (
+      this.at().type !== TokenType.EOF &&
+      this.at().type !== TokenType.CloseBrace
+    ) {
+      body.push(this.parse_stmt());
+    }
+
+    this.expect(
+      TokenType.CloseBrace,
+      "foreach expects close bracket"
+    );
+
+    return {
+      iterable: iterable,
+      var: variable,
+      body: body,
+      kind: "ForeachExpr",
+    } as ForeachExpr;
 
   }
 
@@ -518,7 +577,7 @@ export default class Parser {
       const stmts: Stmt[] = args.map(param => {
         return {
           kind: "CallExpr",
-          caller: {
+          callName: {
             kind: "MemberExpr",
             object: {
               kind: "Identifier",
@@ -679,7 +738,7 @@ export default class Parser {
   private parse_call_expr(caller: Expr): Expr {
     let call_expr: Expr = {
       kind: "CallExpr",
-      caller,
+      callName: caller,
       args: this.parse_args(),
     } as CallExpr;
 

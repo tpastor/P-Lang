@@ -12,6 +12,7 @@ export type NodeType =
   | "IfExpr"
   | "WhileExpr"
   | "ForExpr"
+  | "ForeachExpr"
   | "EvaluatedExpr"
   | "AggregatedExpr"
 
@@ -83,7 +84,8 @@ export interface BinaryExpr extends Expr {
 export interface CallExpr extends Expr {
   kind: "CallExpr";
   args: Expr[];
-  caller: Expr;
+  callName: Expr;
+  obj?: Expr
 }
 
 
@@ -110,6 +112,13 @@ export interface ForExpr extends Expr {
   var: Expr;
   condition: Expr;
   increment: Expr;
+  body: Stmt[];
+}
+
+export interface ForeachExpr extends Expr {
+  kind: "ForeachExpr";
+  var: Expr;
+  iterable: Identifier;
   body: Stmt[];
 }
 

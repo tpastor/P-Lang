@@ -1,0 +1,4 @@
+let a = 5
+let b = 6
+//assert(false, listVariables().has(a))
+//assert(false, listVariables().has(b))

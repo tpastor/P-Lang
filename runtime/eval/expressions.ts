@@ -1,8 +1,8 @@
-import exp = require("constants");
-import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, WhileExpr } from "../../comp/ast";
+import * as ts from "typescript";
+import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, ForeachExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
+import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative } from "../../native-api/bridge";
 
 function eval_numeric_binary_expr(
@@ -231,7 +231,7 @@ export function eval_break_continue(continueBreak: ContinueBreak, scope: Environ
 
 export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     const args = expr.args.map((arg) => evaluate(arg, env));
-    const fn = evaluate(expr.caller, env);
+    const fn = evaluate(expr.callName, env);
 
     if (fn.type == "native-fn") {
         return (fn as NativeFnVal).call(args, env);
@@ -358,6 +358,49 @@ export function eval_for_expr(expr: ForExpr, env: Environment): RuntimeVal {
     return resp;
 }
 
+export function eval_foreach_expr(expr: ForeachExpr, env: Environment): RuntimeVal {
+    const env2 = new Environment(env, expr);
+    evaluate(expr.var, env2);
+    const iterable = evaluate(expr.iterable, env)
+
+    if (expr.var.kind != "VarDeclaration") {
+        throw "Foreach var can only be var declaration " + JSON.stringify(expr.var)
+    }
+
+    if (!isRuntimeArray(iterable)) {
+        throw "Foreach can only be used with array " + JSON.stringify(iterable)
+    }
+
+    const array = iterable as ArrayVal
+
+    let resp: RuntimeVal = MK_NULL();
+    let i: number = 0;
+    let j: number = 0;
+    let varName = (expr.var as VarDeclaration).identifier[0] + "_index"
+    while (env.checkVarExists(varName, false)) {
+        varName += ++j
+    }
+    
+    env2.declareVar(varName, MK_NUMBER(0), false)
+    while (i < array.array.length) {
+        env2.assignVar((expr.var as VarDeclaration).identifier[0], array.array[i])
+        env2.assignVar(varName, MK_NUMBER(i))
+        env2.isContinueSet = false;
+        resp = eval_body(expr.body, env2, true);
+        i++
+        //propagate return
+        if (resp.type == "functionReturn") {
+            return resp;
+        }
+        //break and continue
+        if (env2.isBreakSet) {
+            env2.isBreakSet = false;
+            break;
+        }
+    }
+    return resp;
+}
+
 
 export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal {
     let obj = evaluate(expr.object, env);
@@ -365,6 +408,7 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
         if (obj.type != "object") {
             throw "Left right side of object member eval must be an object"
         }
+        
         const objVal = obj as ObjectVal
         if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral" && (expr.property.kind != "NumericLiteral" && isRuntimeArray(objVal))) {
             throw "Member must be an identifier/stringLiteral/numerical " + JSON.stringify(expr.property)
@@ -404,9 +448,25 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
 }
 
 export function eval_native_block(declaration: NativeBlock, env: Environment): RuntimeVal {
-    const nativeParams = declaration.parameters.map(v => ({ name: v.symbol, value: env.lookupVar(v.symbol) })).map(obj => ({ name: obj.name, value: convertAnyRuntimeValIntoNative(obj.value) }))
-        .map(obj => "let " + obj.name + " = " + obj.value).join(";")
-    let code = "(function() { " + nativeParams + ";" + declaration.sourceCode + '}())';
-    const resp = eval(code)
+    const funcAlias = new Map()
+    const nativeParams = declaration.parameters
+        .map(v => ({ name: v.symbol, value: env.lookupVar(v.symbol) }))
+        .map(obj => {
+            if (obj.value.type == "function") {
+                const runtimeVal = convertAnyRuntimeValIntoNative(obj.value, env)
+                funcAlias.set(obj.name, runtimeVal)
+                return { name: obj.name, value: obj.name}
+            } else {
+                return { name: obj.name, value: convertAnyRuntimeValIntoNative(obj.value, env) }
+            }
+        })
+        .map(obj => "let " + obj.name + " = " + obj.value)
+        .join(";")
+    
+    //let code = "(function() { " + nativeParams + ";" + declaration.sourceCode + '}())'; --> TODO: move to Function and bind function alias scope
+    const _MANAGED_ = Object.fromEntries(funcAlias);
+    let code = nativeParams + ";" + declaration.sourceCode;
+    let result = ts.transpile(code);
+    const resp = eval(result)
     return convertAnyNativeIntoRuntimeVal(resp)
 }

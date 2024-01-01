@@ -49,9 +49,18 @@ export default class Environment {
         return value;
     }
 
+    public getVariablesInLocalScope(): string[] {
+        return [...this.variables.keys()]
+    }
+
     public lookupVar(varname: string): RuntimeVal {
         const env = this.resolve(varname);
         return env.variables.get(varname) as RuntimeVal;
+    }
+
+    public checkVarExists(varname: string, onlyLocal:boolean): boolean {
+        return this.check(varname, onlyLocal) != null;
+        
     }
 
     public resolve(varname: string): Environment {
@@ -64,5 +73,17 @@ export default class Environment {
         }
 
         return this.parent.resolve(varname);
+    }
+
+    public check(varname: string, onlyLocal:boolean): Environment {
+        if (this.variables.has(varname)) {
+            return this;
+        }
+
+        if (onlyLocal || this.parent == undefined) {
+            return null;
+        }
+
+        return this.parent.check(varname, onlyLocal);
     }
 }

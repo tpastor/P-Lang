@@ -18,6 +18,7 @@ export enum TokenType {
   Else,
   While,
   For,
+  Foreach,
   Break,
   Continue,
   Return,
@@ -52,6 +53,7 @@ const KEYWORDS: Record<string, TokenType> = {
   return: TokenType.Return,
   else: TokenType.Else,
   native: TokenType.Native,
+  foreach: TokenType.Foreach,
 };
 
 // Represents a single token from the source-code.

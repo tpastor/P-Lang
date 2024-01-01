@@ -1,14 +1,19 @@
-
-let a = fn native(a, b) {
+let a = fn native(a, b, c) {
     %%
-    const currentDate = new Date();
-    console.log(currentDate)
-    return { "add": a + b + 1, "extra": currentDate }
+    const t = _MANAGED_.c();
+    const currentDate = new Date();    
+    console.log("->" + t);
+    ({ "add": a + b + 1 + t, "extra": currentDate })
     %%
 } 
 
-let x_y = a(5,10)
-assert(x_y.add, 16)
+let xx = fn () {
+    print("called!!!") 
+    return 1;
+}
+
+let x_y = a(5,10, xx)
+assert(x_y.add, 17)
 print(x_y)
 
 let z = !(10 == 5)

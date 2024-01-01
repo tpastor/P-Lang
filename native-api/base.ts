@@ -14,6 +14,7 @@ export function createGlobalEnv() {
     env.declareVar("print", MK_NATIVE_FN(print), true)
     env.declareVar("system", MK_NATIVE_FN(system), true)
     env.declareVar("listObjectProps", MK_NATIVE_FN(list), true)
+    env.declareVar("listVariables", MK_NATIVE_FN(variables), true)
     env.declareVar("mergeObj", MK_NATIVE_FN(merge), true)
     env.declareVar("remotePropObj", MK_NATIVE_FN(remove), true)
     env.declareVar("httpGet", MK_NATIVE_FN(httpGet), true)
@@ -79,12 +80,16 @@ export function list(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY([...(args[0] as ObjectVal).properties.keys()].map(key => MK_STRING(key)))
 }
 
+export function variables(args: RuntimeVal[], scope: Environment) {
+    return MK_ARRAY(scope.getVariablesInLocalScope().map(MK_STRING))
+}
+
 export function merge(args: RuntimeVal[], scope: Environment) {
     return MK_OBJECT(args.map(rt => rt as ObjectVal).map(obj => obj.properties).reduce((accum, newVal) => new Map([...accum.entries(), ...newVal.entries()]), new Map<string, RuntimeVal>()))
 }
 
 export function system(args: RuntimeVal[], scope: Environment) {
-    return MK_STRING(require('child_process').execSync('node -v').toString());
+    return MK_STRING(require('child_process').execSync((args[0] as StringVal).value).toString());
 }
 
 export function sleep(args: RuntimeVal[], scope: Environment) {

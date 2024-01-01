@@ -1,0 +1,32 @@
+let a = [0,1,2,3,4,5]
+let b = [1,2,3,4,5,6]
+
+foreach(let x in a) {
+    print(x)
+    assert(x, x_index)
+}
+
+print("inner")
+let t = 6
+foreach(let x in a) {
+    foreach(let y in b) {
+        print(x)
+        print(y)
+        assert(x, x_index)
+        assert(y, y_index + 1)
+        if (x== t) {
+            assert(1, 0)
+        }
+        if (y == t) {
+            t++
+        }
+    }
+}
+
+print("inner ended")
+print(t)
+assert(t,7)
+
+let vars = listVariables()
+assert(false, vars.has("x"))
+assert(false, vars.has("y"))

@@ -1,4 +1,6 @@
-import { ArrayVal, BooleanVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../runtime/values";
+import Environment from "../runtime/environment";
+import { eval_function } from "../runtime/eval/expressions";
+import { ArrayVal, BooleanVal, FunctionReturn, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../runtime/values";
 import { getRuntimeValue } from "./base";
 
 const denyListMethods = new Set(["constructor", "__defineGetter__", "__defineSetter__", "hasOwnProperty", "isPrototypeOf", "__lookupGetter__",
@@ -8,8 +10,8 @@ export function convertNativeIntoObject(obj): RuntimeVal {
     return MK_OBJECT(convertNativeObjectIntoMap(obj))
 }
 
-export function convertObjectIntoNative(val: ObjectVal) {
-    return Object.fromEntries(convertObjectIntoMap(val))
+export function convertObjectIntoNative(val: ObjectVal, env: Environment) {
+    return Object.fromEntries(convertObjectIntoMap(val, env))
 }
 
 export function convertAnyNativeIntoRuntimeVal(val): RuntimeVal {
@@ -32,20 +34,25 @@ export function convertAnyNativeIntoRuntimeVal(val): RuntimeVal {
     }
 }
 
-export function convertAnyRuntimeValIntoNative(val: RuntimeVal) {
+export function convertAnyRuntimeValIntoNative(val: RuntimeVal, env:Environment) {
     switch (val.type) {
         case "number":
             return (val as NumberVal).value
         case "boolean":
             return (val as BooleanVal).value
+        case "function":
+            const f = (val as FunctionVal)
+            return (...args) => convertAnyRuntimeValIntoNative(eval_function(f, args.map(convertAnyNativeIntoRuntimeVal), env), env)                                
+        case "functionReturn":
+            return convertAnyRuntimeValIntoNative((val as FunctionReturn).values[0], env)
         case "object":
-            return convertObjectIntoNative(val as ObjectVal);
+            return convertObjectIntoNative(val as ObjectVal, env);
         default:
             throw "Element does not have a runtime value " + JSON.stringify(val)
     }
 }
 
-function convertObjectIntoMap(val: ObjectVal) {
+function convertObjectIntoMap(val: ObjectVal, env: Environment) {
     const map = new Map();
     for (const [key, value] of val.properties) {
         switch (value.type) {
@@ -56,19 +63,23 @@ function convertObjectIntoMap(val: ObjectVal) {
                 map.set(key, (value as BooleanVal).value)
                 break;
             case "object":
-                map.set(key, convertObjectSpecialCases(value as ObjectVal) || convertObjectIntoMap(value as ObjectVal));
+                map.set(key, convertObjectSpecialCases(value as ObjectVal, env) || convertObjectIntoMap(value as ObjectVal, env));
                 break;                
+            case "function":
+                const f = (value as FunctionVal)
+                map.set(key, (...args) => convertAnyRuntimeValIntoNative(eval_function(f, args.map(convertAnyNativeIntoRuntimeVal), env), env))
+                break;                                                
         }
     }
     return map    
 }
 
-function convertObjectSpecialCases(obj:ObjectVal) {
+function convertObjectSpecialCases(obj:ObjectVal, env: Environment) {
     if (isRuntimeString(obj)) {
         return (obj as StringVal).value
     }
     else if (isRuntimeArray(obj)) {
-        return (obj as ArrayVal).array.map(val => convertAnyRuntimeValIntoNative(val))
+        return (obj as ArrayVal).array.map(val => convertAnyRuntimeValIntoNative(val, env))
     } 
     return undefined
 }

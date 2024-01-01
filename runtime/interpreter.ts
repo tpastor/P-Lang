@@ -8,6 +8,7 @@ import {
     ContinueBreak,
     EvaluatedExpr,
     ForExpr,
+    ForeachExpr,
     FunctionDeclaration,
     Identifier,
     IfExpr,
@@ -25,7 +26,7 @@ import {
 } from "../comp/ast";
 import Environment from "./environment";
 import { eval_aggr_expr, eval_array_declaration, eval_function_declaration, eval_program, eval_var_declaration } from "./eval/statements";
-import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
+import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_foreach_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
     switch (astNode.kind) {
@@ -46,6 +47,8 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
             return eval_while_expr(astNode as WhileExpr, env);                    
         case "ForExpr":
             return eval_for_expr(astNode as ForExpr, env);                        
+        case "ForeachExpr":
+            return eval_foreach_expr(astNode as ForeachExpr, env);                            
         case "MemberExpr":
             return eval_member_expr(astNode as MemberExpr, env);                        
         case "CallExpr":
