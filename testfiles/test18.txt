@@ -1,4 +1,18 @@
+const xx = listVariables()
+assert(false, listVariables()[listVariables().length() - 1].isEmpty())
+assert(false, listVariables()[xx.length() - 1].isEmpty())
+assert(false, listVariables().isEmpty())
+
 let a = 5
 let b = 6
-//assert(false, listVariables().has(a))
-//assert(false, listVariables().has(b))
+let c = [1,2,3]
+let d = []
+assert(true, d.isEmpty())
+
+assert(false, listVariables().has(a))
+assert(false, listVariables().has(b))
+assert(true, listVariables().has("a"))
+assert(true, listVariables().has("b"))
+
+assert(3, c.length())
+assert(2, c[1])

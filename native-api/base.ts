@@ -37,6 +37,13 @@ export function createGlobalEnv() {
         return MK_NULL();
     }), true)
 
+    env.declareVar("assertNotNull", MK_NATIVE_FN((args, scope) => {
+        if (getRuntimeValue(args[0]) != null) {
+            throw "Elements " + JSON.stringify(args) + " should be the same"
+        }
+        return MK_NULL();
+    }), true)
+
     return env;
 }
 

@@ -4,6 +4,7 @@ import { FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, 
 export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
     stringFunctions.set("length", MK_NATIVE_FN(length(array)))
+    stringFunctions.set("isEmpty", MK_NATIVE_FN(isEmpty(array)))
     stringFunctions.set("get", MK_NATIVE_FN(get(array)))
     stringFunctions.set("map", MK_NATIVE_FN(map(array)))
     stringFunctions.set("filter", MK_NATIVE_FN(filter(array)))
@@ -45,6 +46,11 @@ function reduceToString(array: RuntimeVal[]): FunctionCall {
     }
 }
 
+function isEmpty(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {
+        return MK_BOOL(array.length == 0)
+    }
+}
 
 function length(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {

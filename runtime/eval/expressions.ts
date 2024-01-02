@@ -1,9 +1,10 @@
 import * as ts from "typescript";
-import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, ForExpr, ForeachExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
+import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, EvaluatedExpr, ForExpr, ForeachExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative } from "../../native-api/bridge";
+import { getRuntimeValue } from "../../native-api/base";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -403,17 +404,30 @@ export function eval_foreach_expr(expr: ForeachExpr, env: Environment): RuntimeV
 
 
 export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal {
+
+    if (expr.property.kind == "CallExpr") {
+        const call = (expr.property as CallExpr)        
+        let nCall: CallExpr = JSON.parse(JSON.stringify(expr.property));
+        nCall.callName = {
+            kind: "MemberExpr",
+            object: expr.object,
+            property: call.callName,
+            computed: false,
+          } as MemberExpr;
+        const ret = evaluate(nCall, env)
+        if (ret.type == "functionReturn") {
+            return (ret as FunctionReturn).values[0]
+        }
+        return ret
+    }   
+
     let obj = evaluate(expr.object, env);
     if (obj.type == "object") {
         if (obj.type != "object") {
             throw "Left right side of object member eval must be an object"
         }
         
-        const objVal = obj as ObjectVal
-        if (expr.property.kind != "Identifier" && expr.property.kind != "StringLiteral" && (expr.property.kind != "NumericLiteral" && isRuntimeArray(objVal))) {
-            throw "Member must be an identifier/stringLiteral/numerical " + JSON.stringify(expr.property)
-        }
-
+        const objVal = obj as ObjectVal          
         if (expr.property.kind == "NumericLiteral") {
             const num = (expr.property as NumericLiteral).value
             const arrayVal = obj as ArrayVal
@@ -423,10 +437,25 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
         let val;
         if (expr.property.kind == "Identifier") {
             val = (expr.property as Identifier).symbol
-        }
-
-        if (expr.property.kind == "StringLiteral") {
+        } else if (expr.property.kind == "StringLiteral") {
             val = (expr.property as StringLiteral).value
+        } else if (expr.property.kind == "MemberExpr") {
+            const member = expr.property as MemberExpr
+            if (member.object.kind == "Identifier") {
+                const ident = member.object as Identifier
+                const retVal = objVal.properties.get(ident.symbol)
+                if (retVal == null) {
+                    throw "cannot access property that does not exist from object " + JSON.stringify(ident)
+                }
+                member.object = { kind: "EvaluatedExpr", evaluatedVal: retVal } as EvaluatedExpr
+                val = evaluate(member, env)               
+            } else {
+                throw "Could not handle MemberExpr " + JSON.stringify(member)
+            }
+        } else {
+            val = getRuntimeValue(evaluate(expr.property, env))
+            const arrayVal = obj as ArrayVal
+            return arrayVal.array[val]            
         }
 
         return objVal.properties.get(val) || MK_NULL()
@@ -443,7 +472,7 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
         if (!objVal.properties.has(val)) {
             throw "Function " + objVal.name + " does not have member " + val
         }
-        return objVal.properties.get(val)
+        return objVal.properties.get(val) || MK_NULL()
     }
 }
 

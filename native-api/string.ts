@@ -1,8 +1,9 @@
-import { FunctionCall, MK_ARRAY, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "../runtime/values";
+import { FunctionCall, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "../runtime/values";
 import { getRuntimeValue } from "./base";
 
 export function createNativeStringFunctions(str: string): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
+    stringFunctions.set("isEmpty", MK_NATIVE_FN(isEmpty(str)))
     stringFunctions.set("length", MK_NUMBER(str.length))
     stringFunctions.set("charAt", MK_NATIVE_FN(chartAt(str)))
     stringFunctions.set("substring", MK_NATIVE_FN(substring(str)))
@@ -33,6 +34,13 @@ function chartAt(str: string): FunctionCall {
 function substring(str: string): FunctionCall {
     return (args, scope) => {
         return MK_STRING(str.substring(getRuntimeValue(args[0]) as number, getRuntimeValue(args[1]) as number))
+    }
+}
+
+
+function isEmpty(str: string): FunctionCall {
+    return (args, scope) => {
+        return MK_BOOL(str.length == 0)
     }
 }
 
