@@ -1,7 +1,6 @@
 import { Stmt } from "../comp/ast";
 import { RuntimeVal } from "./values";
 
-
 export default class Environment {
     private parent?: Environment;
     private variables: Map<string, RuntimeVal>;

@@ -1,1 +1,3 @@
-pastot language -> lexer/parser|AST/interpreter
+p-lang language -> lexer/parser|AST/interpreter
+
+

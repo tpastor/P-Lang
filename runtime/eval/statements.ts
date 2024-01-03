@@ -1,8 +1,8 @@
   import { AggregatedExpr, ArrayDeclaration, FunctionDeclaration, Program, VarDeclaration } from "../../comp/ast";
   import { createFunctionExtensions } from "../../native-api/functions";
-  import Environment from "../environment";
   import { evaluate } from "../interpreter";
   import { FunctionReturn, FunctionVal, MK_ARRAY, MK_NULL, NumberVal, RuntimeVal } from "../values";
+  import Environment from "../environment";
 
   export function eval_program(program: Program, env: Environment): RuntimeVal {
     let lastEvaluated: RuntimeVal = MK_NULL();
@@ -61,7 +61,6 @@
       return env.declareVar(declaration.identifier[0], value, declaration.constant);
     }
   }
-
 
   export function eval_function_declaration(
     declaration: FunctionDeclaration,

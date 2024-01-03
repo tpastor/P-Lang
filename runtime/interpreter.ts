@@ -60,8 +60,7 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
         case "BinaryExpr":
             return eval_binary_expr(astNode as BinaryExpr, env);
         case "Program":
-            return eval_program(astNode as Program, env);
-        // Handle statements
+            return eval_program(astNode as Program, env);        
         case "FunctionDeclaration":
             return eval_function_declaration(astNode as FunctionDeclaration, env);
         case "VarDeclaration":

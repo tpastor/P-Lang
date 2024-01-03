@@ -1,10 +1,10 @@
 import * as ts from "typescript";
 import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, EvaluatedExpr, ForExpr, ForeachExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
-import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative } from "../../native-api/bridge";
 import { getRuntimeValue } from "../../native-api/base";
+import Environment from "../environment";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,

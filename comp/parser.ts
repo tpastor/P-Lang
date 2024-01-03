@@ -71,20 +71,6 @@ export default class Parser {
     return prev;
   }
 
-  private expects(types: Set<TokenType>, err: any) {
-    const at = this.at().type;
-    if (at == TokenType.EOF && types.has(at)) {
-      return null;
-    }
-    const prev = this.tokens.shift() as Token;
-    if (!prev || !types.has(prev.type)) {
-      console.error("Parser Error:\n", err, prev, " - Expecting: ", types);
-      process.exit(1);
-    }
-
-    return prev;
-  }
-
   public produceAST(sourceCode: string): Program {
     this.tokens = tokenize(sourceCode);
     const program: Program = {
@@ -100,15 +86,13 @@ export default class Parser {
     return program;
   }
 
-  // Handle complex statement types
   private parse_stmt(program: Program): Stmt {
 
-    // skip to parse_expr
     switch (this.at().type) {
       case TokenType.For:
         return this.parse_for_declaration(program);
       case TokenType.Foreach:
-          return this.parse_foreach_declaration(program);
+        return this.parse_foreach_declaration(program);
       case TokenType.While:
         return this.parse_while_declaration(program);
       case TokenType.If:
@@ -130,7 +114,7 @@ export default class Parser {
 
   private parse_negation(program: Program): Stmt {
     const token = this.eat();
-    const op =this.parse_expr(program)
+    const op = this.parse_expr(program)
     return {
       kind: "UnaryExpr",
       left: op,
@@ -138,6 +122,7 @@ export default class Parser {
       tokenForDebug: token,
     } as UnaryExpr;
   }
+
   private parse_return(program: Program): Stmt {
     const token = this.eat();
     let ret = [];
@@ -149,6 +134,7 @@ export default class Parser {
     }
     return { kind: "Return", returnVal: ret, tokenForDebug: token } as Return;
   }
+
   private parse_break_continue(program: Program): Stmt {
     const token = this.eat();
     if (this.at().type == TokenType.Semicolon) {
@@ -232,11 +218,13 @@ export default class Parser {
       throw "foreach missing in"
     }
 
-    const iterable: Identifier = { kind: "Identifier", symbol: this.expect(
-      TokenType.Identifier,
-      "foreach expects iterable"
-    ).value } as Identifier;
-  
+    const iterable: Identifier = {
+      kind: "Identifier", symbol: this.expect(
+        TokenType.Identifier,
+        "foreach expects iterable"
+      ).value
+    } as Identifier;
+
     this.expect(
       TokenType.CloseParen,
       "foreach expects close paren"
@@ -414,8 +402,8 @@ export default class Parser {
       let ident = ""
       if (this.at().type == TokenType.NativeBlock) {
         ident = this.eat().value
-      }    
-      body.push({kind: "NativeBlock", parameters: args, sourceCode: ident} as NativeBlock)
+      }
+      body.push({ kind: "NativeBlock", parameters: args, sourceCode: ident } as NativeBlock)
     } else {
       while (
         this.at().type !== TokenType.EOF &&
@@ -450,7 +438,6 @@ export default class Parser {
     }
     return "__" + result;
   }
-
 
   private parse_expr(program: Program): Expr {
     return this.parse_assignment_expr(program);
@@ -564,7 +551,7 @@ export default class Parser {
         kind: "VarDeclaration",
         identifier: [identifier],
         constant: isConstant,
-        isArray: false, 
+        isArray: false,
         tokenForDebug: token
       } as VarDeclaration)
 
@@ -638,7 +625,6 @@ export default class Parser {
 
     return left;
   }
-
 
   // Handle Addition & Subtraction Operations
   private parse_additive_expr(program: Program): Expr {
@@ -742,7 +728,7 @@ export default class Parser {
   }
 
   private parse_member_expr(program: Program): Expr {
-    let object = this.parse_call_member_expr(program); 
+    let object = this.parse_call_member_expr(program);
 
     while (
       this.at().type == TokenType.Dot || this.at().type == TokenType.OpenBracket
@@ -759,7 +745,7 @@ export default class Parser {
         if (property.kind != "Identifier" && property.kind != "CallExpr" && property.kind != "MemberExpr") {
           throw `Cannot use dot operator without right hand side being a identifier/CallExpr/MemberExpr`;
         }
-      } else { // this allows obj[computedValue]
+      } else {
         computed = true;
         property = this.parse_expr(program);
         this.expect(
@@ -840,16 +826,16 @@ export default class Parser {
     }
   }
 
-  private parse_array_value_declaration(isConstant: boolean, identifier: string, program: Program) : Expr {
+  private parse_array_value_declaration(isConstant: boolean, identifier: string, program: Program): Expr {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
       const token = this.at()
       this.eat()
       this.eat()
-  
+
       if (this.at().type == TokenType.Semicolon) {
         this.eat();
       }
-  
+
       return {
         kind: "VarDeclaration",
         identifier: [identifier],
@@ -858,17 +844,17 @@ export default class Parser {
         tokenForDebug: token
       } as VarDeclaration;
     }
-  
+
     if (this.at().type == TokenType.OpenBracket) {
       this.eat()
-  
+
       const args = this.parse_arguments_list(program)
-  
+
       this.expect(
         TokenType.CloseBracket,
         "Expected close bracket token following array identifier in var declaration.",
       );
-  
+
       const token = this.at()
       const stmts: Stmt[] = args.map(param => {
         return {
@@ -889,7 +875,7 @@ export default class Parser {
           tokenForDebug: token
         } as CallExpr
       })
-  
+
       stmts.unshift({
         kind: "VarDeclaration",
         identifier: [identifier],
@@ -897,11 +883,11 @@ export default class Parser {
         isArray: true,
         tokenForDebug: token
       } as VarDeclaration)
-  
+
       if (this.at().type == TokenType.Semicolon) {
         this.eat();
       }
-  
+
       return {
         kind: "AggregatedExpr",
         stmts: stmts,
@@ -910,50 +896,46 @@ export default class Parser {
     }
     return undefined
   }
-  
-  
-  
-  private parse_array_value_inline(program: Program) : Expr {
+
+  private parse_array_value_inline(program: Program): Expr {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
       const token = this.at()
       this.eat()
       this.eat()
-  
+
       if (this.at().type == TokenType.Semicolon) {
         this.eat();
       }
-  
+
       return {
-        kind: "ArrayDeclaration", 
+        kind: "ArrayDeclaration",
         tokenForDebug: token
       } as ArrayDeclaration;
     }
-  
+
     if (this.at().type == TokenType.OpenBracket) {
       const token = this.at()
       this.eat()
-  
+
       const args = this.parse_arguments_list(program)
-  
+
       this.expect(
         TokenType.CloseBracket,
         "Expected close bracket token following array identifier in var declaration.",
       );
-    
+
       if (this.at().type == TokenType.Semicolon) {
         this.eat();
       }
-  
+
       return {
-        kind: "ArrayDeclaration", 
+        kind: "ArrayDeclaration",
         items: args,
         tokenForDebug: token
       } as ArrayDeclaration;
     }
     return undefined
   }
-  
-
 }
 
 

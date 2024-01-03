@@ -128,7 +128,7 @@ export function tokenize(sourceCode: string): Token[] {
     if (src.length > 8 && startsWith(src, "###file:")) {
       for (let s of "###file:") {
         src.shift()
-      }      
+      }
       let ident = ""
       while (src.length > 0 && src[0] != "#") {
         ident += src.shift()
