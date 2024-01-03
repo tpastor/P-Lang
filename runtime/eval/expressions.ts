@@ -413,6 +413,7 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             object: expr.object,
             property: call.callName,
             computed: false,
+            tokenForDebug: expr.tokenForDebug
         } as MemberExpr;
         const ret = evaluate(nCall, env)
         if (ret.type == "functionReturn") {
@@ -505,7 +506,8 @@ function mergeObjMemberExpr(property: MemberExpr, obj: ObjectVal, env: Environme
             kind: "MemberExpr",
             object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
             property: ident,
-            computed: false
+            computed: false,
+            tokenForDebug: property.tokenForDebug
         } as MemberExpr, env)
         property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
         return evaluate(property, env)
@@ -516,14 +518,16 @@ function mergeObjMemberExpr(property: MemberExpr, obj: ObjectVal, env: Environme
             kind: "MemberExpr",
             object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
             property: proObj.object,
-            computed: false
+            computed: false,
+            tokenForDebug: property.tokenForDebug
         } as MemberExpr, env)
 
         const ttt2 = evaluate({
             kind: "MemberExpr",
             object: { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr,
             property: proObj.property,
-            computed: false
+            computed: false,
+            tokenForDebug: property.tokenForDebug
         } as MemberExpr, env)
 
         property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt2 } as EvaluatedExpr
@@ -537,7 +541,8 @@ function mergeObjMemberExpr(property: MemberExpr, obj: ObjectVal, env: Environme
                 kind: "MemberExpr",
                 object: { kind: "EvaluatedExpr", evaluatedVal: (obj as ArrayVal).array[num] } as EvaluatedExpr,
                 property: ident.object,
-                computed: false
+                computed: false,
+                tokenForDebug: property.tokenForDebug
             } as MemberExpr, env)
             property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
             return evaluate(property, env)

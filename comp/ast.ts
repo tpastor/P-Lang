@@ -1,4 +1,5 @@
 import { RuntimeVal } from "../runtime/values";
+import { Token } from "./lexer";
 
 export type NodeType =
   | "Program"
@@ -30,6 +31,7 @@ export type NodeType =
 
 export interface Stmt {
   kind: NodeType;
+  tokenForDebug?: Token
 }
 
 /**

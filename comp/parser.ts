@@ -129,16 +129,17 @@ export default class Parser {
   }
 
   private parse_negation(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     const op =this.parse_expr(program)
     return {
       kind: "UnaryExpr",
       left: op,
       operator: "!",
+      tokenForDebug: token,
     } as UnaryExpr;
   }
   private parse_return(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     let ret = [];
     if (this.at().type != TokenType.CloseBrace) {
       this.parse_arguments_list(program).forEach(arg => ret.push(arg))
@@ -146,18 +147,18 @@ export default class Parser {
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
     }
-    return { kind: "Return", returnVal: ret } as Return;
+    return { kind: "Return", returnVal: ret, tokenForDebug: token } as Return;
   }
   private parse_break_continue(program: Program): Stmt {
     const token = this.eat();
     if (this.at().type == TokenType.Semicolon) {
       this.eat();
     }
-    return { kind: "ContinueBreak", isContinue: !!(token.value == "continue") } as ContinueBreak;
+    return { kind: "ContinueBreak", isContinue: !!(token.value == "continue"), tokenForDebug: token } as ContinueBreak;
   }
 
   private parse_for_declaration(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     this.expect(
       TokenType.OpenParen,
       "for expects open parenthesis"
@@ -208,12 +209,13 @@ export default class Parser {
       var: variable,
       body: body,
       kind: "ForExpr",
+      tokenForDebug: token
     } as ForExpr;
 
   }
 
   private parse_foreach_declaration(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     this.expect(
       TokenType.OpenParen,
       "for expects open parenthesis"
@@ -264,12 +266,13 @@ export default class Parser {
       var: variable,
       body: body,
       kind: "ForeachExpr",
+      tokenForDebug: token
     } as ForeachExpr;
 
   }
 
   private parse_if_declaration(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     this.expect(
       TokenType.OpenParen,
       "if expects open parenthesis"
@@ -329,11 +332,12 @@ export default class Parser {
       body: body,
       elseBody: elseBody,
       kind: "IfExpr",
+      tokenForDebug: token
     } as IfExpr;
   }
 
   parse_while_declaration(program: Program): Stmt {
-    this.eat();
+    const token = this.eat();
     this.expect(
       TokenType.OpenParen,
       "while expects open parenthesis"
@@ -369,11 +373,12 @@ export default class Parser {
       condition: condition,
       body: body,
       kind: "WhileExpr",
+      tokenForDebug: token
     } as WhileExpr;
   }
 
   parse_fn_declaration(program: Program): FunctionDeclaration {
-    this.eat();
+    const token = this.eat();
 
     let isNative = false;
     if (this.at().type == TokenType.Native) {
@@ -430,6 +435,7 @@ export default class Parser {
       name: name || this.generateFunctionName(20),
       parameters: params,
       kind: "FunctionDeclaration",
+      tokenForDebug: token
     } as FunctionDeclaration;
   }
 
@@ -454,9 +460,9 @@ export default class Parser {
     const left = this.parse_object_expr(program);
 
     if (this.at().type == TokenType.Equals) {
-      this.eat(); // advance past equals
+      const token = this.eat(); // advance past equals
       const value = this.parse_assignment_expr(program);
-      return { value, assigne: left, kind: "AssignmentExpr" } as AssignmentExpr;
+      return { value, assigne: left, kind: "AssignmentExpr", tokenForDebug: token } as AssignmentExpr;
     }
 
     return left;
@@ -473,7 +479,7 @@ export default class Parser {
       return this.parse_comparison_expr(program);
     }
 
-    this.eat(); // advance past open brace.
+    const token = this.eat(); // advance past open brace.
 
     const properties = new Array<Property>();
 
@@ -486,11 +492,11 @@ export default class Parser {
       // Allows shorthand key: pair -> { key, }
       if (this.at().type == TokenType.Comma) {
         this.eat(); // advance past comma
-        properties.push({ key, kind: "Property" } as Property);
+        properties.push({ key, kind: "Property", tokenForDebug: token } as Property);
         continue;
       } // Allows shorthand key: pair -> { key }
       else if (this.at().type == TokenType.CloseBrace) {
-        properties.push({ key, kind: "Property" });
+        properties.push({ key, kind: "Property", tokenForDebug: token });
         continue;
       }
 
@@ -511,7 +517,7 @@ export default class Parser {
     }
 
     this.expect(TokenType.CloseBrace, "Object literal missing closing brace.");
-    return { kind: "ObjectLiteral", properties } as ObjectLiteral;
+    return { kind: "ObjectLiteral", properties, tokenForDebug: token } as ObjectLiteral;
   }
 
 
@@ -522,6 +528,7 @@ export default class Parser {
   // ( LET | CONST ) IDENT = FUNC ....(;)
   // ( LET | CONST ) IDENT1, IDENT2 = FUNC ....(;)
   parse_var_declaration(program: Program): Stmt {
+    const token = this.at()
     const isConstant = this.eat().type == TokenType.Const;
     const identifiers = this.parse_identifier_list(program)
     const identifier = identifiers[0]
@@ -539,6 +546,7 @@ export default class Parser {
         identifier: [identifier],
         constant: false,
         isArray: false,
+        tokenForDebug: token
       } as VarDeclaration;
     }
 
@@ -553,6 +561,7 @@ export default class Parser {
     }
 
     if (this.at().type == TokenType.Fn) {
+      let token = this.at()
       const func: FunctionDeclaration = this.parse_fn_declaration(program)
       const stmts: Stmt[] = [func]
 
@@ -560,7 +569,8 @@ export default class Parser {
         kind: "VarDeclaration",
         identifier: [identifier],
         constant: isConstant,
-        isArray: false
+        isArray: false, 
+        tokenForDebug: token
       } as VarDeclaration)
 
       stmts.push(
@@ -571,7 +581,8 @@ export default class Parser {
           }, assigne: {
             kind: "Identifier",
             symbol: identifier,
-          }, kind: "AssignmentExpr"
+          }, kind: "AssignmentExpr",
+          tokenForDebug: token
         } as AssignmentExpr);
 
       if (this.at().type == TokenType.Semicolon) {
@@ -581,6 +592,7 @@ export default class Parser {
       return {
         kind: "AggregatedExpr",
         stmts: stmts,
+        tokenForDebug: token,
       } as AggregatedExpr
 
     }
@@ -591,7 +603,8 @@ export default class Parser {
       value: [this.parse_expr(program)],
       identifier: identifiers,
       constant: isConstant,
-      isArray: false
+      isArray: false,
+      tokenForDebug: token
     } as VarDeclaration;
 
     if (this.at().type == TokenType.Semicolon) {
@@ -602,6 +615,7 @@ export default class Parser {
   }
 
   private parse_comparison_expr(program: Program): Expr {
+    const token = this.at()
     let left = this.parse_additive_expr(program);
 
     if (this.at().value == "++" || this.at().value == "--") {
@@ -610,6 +624,7 @@ export default class Parser {
         kind: "UnaryExpr",
         left,
         operator,
+        tokenForDebug: token
       } as UnaryExpr;
     }
 
@@ -622,6 +637,7 @@ export default class Parser {
         left,
         right,
         operator,
+        tokenForDebug: token
       } as BinaryExpr;
     }
 
@@ -631,6 +647,7 @@ export default class Parser {
 
   // Handle Addition & Subtraction Operations
   private parse_additive_expr(program: Program): Expr {
+    const token = this.at()
     let left = this.parse_multiplicative_expr(program);
 
     while (this.at().value == "+" || this.at().value == "-") {
@@ -641,6 +658,7 @@ export default class Parser {
         left,
         right,
         operator,
+        tokenForDebug: token
       } as BinaryExpr;
     }
 
@@ -649,6 +667,7 @@ export default class Parser {
 
   // Handle Multiplication, Division & Modulo Operations
   private parse_multiplicative_expr(program: Program): Expr {
+    const token = this.at()
     let left = this.parse_member_expr(program);
 
     while (
@@ -661,6 +680,7 @@ export default class Parser {
         left,
         right,
         operator,
+        tokenForDebug: token
       } as BinaryExpr;
     }
 
@@ -678,10 +698,12 @@ export default class Parser {
   }
 
   private parse_call_expr(caller: Expr, program: Program): Expr {
+    const token = this.at()
     let call_expr: Expr = {
       kind: "CallExpr",
       callName: caller,
       args: this.parse_args(program),
+      tokenForDebug: token
     } as CallExpr;
 
     if (this.at().type == TokenType.OpenParen) {
@@ -756,6 +778,7 @@ export default class Parser {
         object,
         property,
         computed,
+        tokenForDebug: operator
       } as MemberExpr;
     }
 
@@ -764,6 +787,7 @@ export default class Parser {
 
   // Parse Literal Values & Grouping Expressions
   private parse_primary_expr(program: Program): Expr {
+    const token = this.at()
     const tk = this.at().type;
 
     // Determine which token we are currently at and return literal value
@@ -777,12 +801,14 @@ export default class Parser {
         return {
           kind: "NumericLiteral",
           value: parseFloat(this.eat().value),
+          tokenForDebug: token
         } as NumericLiteral;
 
       case TokenType.StringMark: {
         return {
           kind: "StringLiteral",
           value: this.eat().value,
+          tokenForDebug: token
         } as StringLiteral;
       }
 
@@ -814,6 +840,7 @@ export default class Parser {
 
   private parse_array_value_declaration(isConstant: boolean, identifier: string, program: Program) : Expr {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
+      const token = this.at()
       this.eat()
       this.eat()
   
@@ -825,7 +852,8 @@ export default class Parser {
         kind: "VarDeclaration",
         identifier: [identifier],
         constant: isConstant,
-        isArray: true
+        isArray: true,
+        tokenForDebug: token
       } as VarDeclaration;
     }
   
@@ -839,6 +867,7 @@ export default class Parser {
         "Expected close bracket token following array identifier in var declaration.",
       );
   
+      const token = this.at()
       const stmts: Stmt[] = args.map(param => {
         return {
           kind: "CallExpr",
@@ -855,6 +884,7 @@ export default class Parser {
             computed: false,
           },
           args: [param],
+          tokenForDebug: token
         } as CallExpr
       })
   
@@ -862,7 +892,8 @@ export default class Parser {
         kind: "VarDeclaration",
         identifier: [identifier],
         constant: isConstant,
-        isArray: true
+        isArray: true,
+        tokenForDebug: token
       } as VarDeclaration)
   
       if (this.at().type == TokenType.Semicolon) {
@@ -872,6 +903,7 @@ export default class Parser {
       return {
         kind: "AggregatedExpr",
         stmts: stmts,
+        tokenForDebug: token
       } as AggregatedExpr
     }
     return undefined
@@ -881,6 +913,7 @@ export default class Parser {
   
   private parse_array_value_inline(program: Program) : Expr {
     if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
+      const token = this.at()
       this.eat()
       this.eat()
   
@@ -890,10 +923,12 @@ export default class Parser {
   
       return {
         kind: "ArrayDeclaration", 
+        tokenForDebug: token
       } as ArrayDeclaration;
     }
   
     if (this.at().type == TokenType.OpenBracket) {
+      const token = this.at()
       this.eat()
   
       const args = this.parse_arguments_list(program)
@@ -909,7 +944,8 @@ export default class Parser {
   
       return {
         kind: "ArrayDeclaration", 
-        items: args
+        items: args,
+        tokenForDebug: token
       } as ArrayDeclaration;
     }
     return undefined
