@@ -1,0 +1,9 @@
+let tt = {
+    z: ["a", "b"][0],
+    asd: "tt".uppercase(),
+    x: [],
+    y: [1,2,3]    
+}
+
+assert("TT", tt.asd)
+assert("a", tt.z)

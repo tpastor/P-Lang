@@ -469,11 +469,6 @@ export default class Parser {
   }
 
   private parse_object_expr(program: Program): Expr {
-    const arrayDeclaration = this.parse_array_value_inline(program)
-    if (arrayDeclaration) {
-      return arrayDeclaration;
-    }
-
     // { Prop[] }
     if (this.at().type !== TokenType.OpenBrace) {
       return this.parse_comparison_expr(program);
@@ -829,6 +824,13 @@ export default class Parser {
 
       case TokenType.Fn: {
         return this.parse_fn_declaration(program)
+      }
+
+      case TokenType.OpenBracket: {
+        const arrayDeclaration = this.parse_array_value_inline(program)
+        if (arrayDeclaration) {
+          return arrayDeclaration;
+        }
       }
 
       // Unidentified Tokens and Invalid Code Reached
