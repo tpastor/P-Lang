@@ -463,10 +463,9 @@ export default class Parser {
   }
 
   private parse_object_expr(program: Program): Expr {
-    if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
-      this.eat()
-      this.eat()
-      return { kind: "ArrayDeclaration" } as ArrayDeclaration;
+    const arrayDeclaration = this.parse_array_value_inline(program)
+    if (arrayDeclaration) {
+      return arrayDeclaration;
     }
 
     // { Prop[] }
@@ -548,66 +547,9 @@ export default class Parser {
       "Expected equals token following identifier in var declaration.",
     );
 
-    if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
-      this.eat()
-      this.eat()
-
-      if (this.at().type == TokenType.Semicolon) {
-        this.eat();
-      }
-
-      return {
-        kind: "VarDeclaration",
-        identifier: [identifier],
-        constant: isConstant,
-        isArray: true
-      } as VarDeclaration;
-    }
-
-    if (this.at().type == TokenType.OpenBracket) {
-      this.eat()
-
-      const args = this.parse_arguments_list(program)
-
-      this.expect(
-        TokenType.CloseBracket,
-        "Expected close bracket token following array identifier in var declaration.",
-      );
-
-      const stmts: Stmt[] = args.map(param => {
-        return {
-          kind: "CallExpr",
-          callName: {
-            kind: "MemberExpr",
-            object: {
-              kind: "Identifier",
-              symbol: identifier,
-            },
-            property: {
-              kind: "Identifier",
-              symbol: "push",
-            },
-            computed: false,
-          },
-          args: [param],
-        } as CallExpr
-      })
-
-      stmts.unshift({
-        kind: "VarDeclaration",
-        identifier: [identifier],
-        constant: isConstant,
-        isArray: true
-      } as VarDeclaration)
-
-      if (this.at().type == TokenType.Semicolon) {
-        this.eat();
-      }
-
-      return {
-        kind: "AggregatedExpr",
-        stmts: stmts,
-      } as AggregatedExpr
+    const arrayBody = this.parse_array_value_declaration(isConstant, identifier, program)
+    if (arrayBody) {
+      return arrayBody
     }
 
     if (this.at().type == TokenType.Fn) {
@@ -870,8 +812,111 @@ export default class Parser {
     }
   }
 
-}
+  private parse_array_value_declaration(isConstant: boolean, identifier: string, program: Program) : Expr {
+    if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
+      this.eat()
+      this.eat()
+  
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat();
+      }
+  
+      return {
+        kind: "VarDeclaration",
+        identifier: [identifier],
+        constant: isConstant,
+        isArray: true
+      } as VarDeclaration;
+    }
+  
+    if (this.at().type == TokenType.OpenBracket) {
+      this.eat()
+  
+      const args = this.parse_arguments_list(program)
+  
+      this.expect(
+        TokenType.CloseBracket,
+        "Expected close bracket token following array identifier in var declaration.",
+      );
+  
+      const stmts: Stmt[] = args.map(param => {
+        return {
+          kind: "CallExpr",
+          callName: {
+            kind: "MemberExpr",
+            object: {
+              kind: "Identifier",
+              symbol: identifier,
+            },
+            property: {
+              kind: "Identifier",
+              symbol: "push",
+            },
+            computed: false,
+          },
+          args: [param],
+        } as CallExpr
+      })
+  
+      stmts.unshift({
+        kind: "VarDeclaration",
+        identifier: [identifier],
+        constant: isConstant,
+        isArray: true
+      } as VarDeclaration)
+  
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat();
+      }
+  
+      return {
+        kind: "AggregatedExpr",
+        stmts: stmts,
+      } as AggregatedExpr
+    }
+    return undefined
+  }
+  
+  
+  
+  private parse_array_value_inline(program: Program) : Expr {
+    if (this.at().type == TokenType.OpenBracket && this.la()?.type == TokenType.CloseBracket) {
+      this.eat()
+      this.eat()
+  
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat();
+      }
+  
+      return {
+        kind: "ArrayDeclaration", 
+      } as ArrayDeclaration;
+    }
+  
+    if (this.at().type == TokenType.OpenBracket) {
+      this.eat()
+  
+      const args = this.parse_arguments_list(program)
+  
+      this.expect(
+        TokenType.CloseBracket,
+        "Expected close bracket token following array identifier in var declaration.",
+      );
+    
+      if (this.at().type == TokenType.Semicolon) {
+        this.eat();
+      }
+  
+      return {
+        kind: "ArrayDeclaration", 
+        items: args
+      } as ArrayDeclaration;
+    }
+    return undefined
+  }
+  
 
+}
 
 
 // Assignment

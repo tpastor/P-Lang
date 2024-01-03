@@ -85,7 +85,6 @@ export interface CallExpr extends Expr {
   kind: "CallExpr";
   args: Expr[];
   callName: Expr;
-  obj?: Expr
 }
 
 
@@ -178,6 +177,7 @@ export interface ObjectLiteral extends Expr {
 //cant be initialized during creation for now
 export interface ArrayDeclaration extends Expr {
   kind: "ArrayDeclaration";
+  items: Expr[]
 }
 
 export interface ContinueBreak extends Expr {

@@ -1,0 +1,20 @@
+let tt = {
+    asd: "tt",
+    x: [],
+    y: [1,2,3],
+    z: ["a", "b"]
+}
+
+assert("ad", tt.z[0].lowercase().uppercase().lowercase().lowercase().uppercase().lowercase() + "d")
+assert("ttd", tt.asd.lowercase().uppercase().lowercase().lowercase().uppercase().lowercase() + "d")
+
+assert("Bd", tt.z[1].lowercase().uppercase().lowercase().lowercase().uppercase() + "d")
+assert("TTd", tt.asd.lowercase().uppercase().lowercase().lowercase().uppercase() + "d")
+
+print(tt.y.length())
+print(tt.x.isEmpty())
+
+assert("tt", tt.asd)
+assert(3, tt.y.length())
+assert(1, tt.y[0])
+assert(true, tt.x.isEmpty())

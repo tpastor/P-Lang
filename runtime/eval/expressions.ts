@@ -381,7 +381,7 @@ export function eval_foreach_expr(expr: ForeachExpr, env: Environment): RuntimeV
     while (env.checkVarExists(varName, false)) {
         varName += ++j
     }
-    
+
     env2.declareVar(varName, MK_NUMBER(0), false)
     while (i < array.array.length) {
         env2.assignVar((expr.var as VarDeclaration).identifier[0], array.array[i])
@@ -406,28 +406,28 @@ export function eval_foreach_expr(expr: ForeachExpr, env: Environment): RuntimeV
 export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal {
 
     if (expr.property.kind == "CallExpr") {
-        const call = (expr.property as CallExpr)        
+        const call = (expr.property as CallExpr)
         let nCall: CallExpr = JSON.parse(JSON.stringify(expr.property));
         nCall.callName = {
             kind: "MemberExpr",
             object: expr.object,
             property: call.callName,
             computed: false,
-          } as MemberExpr;
+        } as MemberExpr;
         const ret = evaluate(nCall, env)
         if (ret.type == "functionReturn") {
             return (ret as FunctionReturn).values[0]
         }
         return ret
-    }   
+    }
 
     let obj = evaluate(expr.object, env);
     if (obj.type == "object") {
         if (obj.type != "object") {
             throw "Left right side of object member eval must be an object"
         }
-        
-        const objVal = obj as ObjectVal          
+
+        const objVal = obj as ObjectVal
         if (expr.property.kind == "NumericLiteral") {
             const num = (expr.property as NumericLiteral).value
             const arrayVal = obj as ArrayVal
@@ -441,21 +441,69 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             val = (expr.property as StringLiteral).value
         } else if (expr.property.kind == "MemberExpr") {
             const member = expr.property as MemberExpr
-            if (member.object.kind == "Identifier") {
-                const ident = member.object as Identifier
-                const retVal = objVal.properties.get(ident.symbol)
-                if (retVal == null) {
-                    throw "cannot access property that does not exist from object " + JSON.stringify(ident)
+            function merge(property: MemberExpr, obj: ObjectVal) {
+                if (property.object.kind == "Identifier") {
+                    const ident = property.object as Identifier
+                    const retVal = obj.properties.get(ident.symbol)
+                    if (retVal == null) {
+                        throw "cannot access property that does not exist from object " + JSON.stringify(ident)
+                    }
+                    property.object = { kind: "EvaluatedExpr", evaluatedVal: retVal } as EvaluatedExpr
+                    return evaluate(property, env)
+                } else if (property.object.kind == "CallExpr") {
+                    const ident = property.object as CallExpr
+                    const ttt = evaluate({
+                        kind: "MemberExpr",
+                        object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
+                        property: ident,
+                        computed: false
+                    } as MemberExpr, env)
+                    member.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
+                    return evaluate(member, env)
+                } else if (property.object.kind == "MemberExpr") {
+                    const proObj = property.object as MemberExpr
+                    
+                    const ttt = evaluate({
+                        kind: "MemberExpr",
+                        object: { kind: "EvaluatedExpr", evaluatedVal: objVal } as EvaluatedExpr,
+                        property: proObj.object ,
+                        computed: false
+                    } as MemberExpr, env)
+
+                    const ttt2 = evaluate({
+                        kind: "MemberExpr",
+                        object: { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr,
+                        property: proObj.property ,
+                        computed: false
+                    } as MemberExpr, env)
+
+                    property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt2 } as EvaluatedExpr
+                
+                    if (property.property.kind == "MemberExpr") {
+                        return evaluate(property, env)
+                    } else if (property.property.kind == "NumericLiteral" && isRuntimeArray(obj)) {
+                        const ident = property.object as MemberExpr
+                        const num = (property.property as NumericLiteral).value
+                        const ttt = evaluate({
+                            kind: "MemberExpr",
+                            object: { kind: "EvaluatedExpr", evaluatedVal: (obj as ArrayVal).array[num] } as EvaluatedExpr,
+                            property: ident.object,
+                            computed: false
+                        } as MemberExpr, env)
+                        member.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
+                        return evaluate(member, env)
+                    } else {
+                        throw "Unsupported member access chain " + JSON.stringify(property)
+                    }
+                } else {
+                    throw "Could not handle MemberExpr " + JSON.stringify(member)
                 }
-                member.object = { kind: "EvaluatedExpr", evaluatedVal: retVal } as EvaluatedExpr
-                val = evaluate(member, env)               
-            } else {
-                throw "Could not handle MemberExpr " + JSON.stringify(member)
             }
+            return merge(member, objVal);                    
         } else {
             val = getRuntimeValue(evaluate(expr.property, env))
             const arrayVal = obj as ArrayVal
-            return arrayVal.array[val]            
+            return arrayVal.array[val]
         }
 
         return objVal.properties.get(val) || MK_NULL()
@@ -484,14 +532,14 @@ export function eval_native_block(declaration: NativeBlock, env: Environment): R
             if (obj.value.type == "function") {
                 const runtimeVal = convertAnyRuntimeValIntoNative(obj.value, env)
                 funcAlias.set(obj.name, runtimeVal)
-                return { name: obj.name, value: obj.name}
+                return { name: obj.name, value: obj.name }
             } else {
                 return { name: obj.name, value: convertAnyRuntimeValIntoNative(obj.value, env) }
             }
         })
         .map(obj => "let " + obj.name + " = " + obj.value)
         .join(";")
-    
+
     //let code = "(function() { " + nativeParams + ";" + declaration.sourceCode + '}())'; --> TODO: move to Function and bind function alias scope
     const _MANAGED_ = Object.fromEntries(funcAlias);
     let code = nativeParams + ";" + declaration.sourceCode;

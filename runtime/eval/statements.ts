@@ -33,6 +33,9 @@
     declaration: ArrayDeclaration,
     env: Environment,
   ): RuntimeVal {
+    if (declaration.items) {
+      return MK_ARRAY(declaration.items.map(item => evaluate(item, env)))
+    }
     return MK_ARRAY([]);
   }
 

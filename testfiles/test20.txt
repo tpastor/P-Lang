@@ -1,0 +1,9 @@
+let tt = "aa"
+let tt2 = ["ab"]
+
+assert("Ad", tt2[0].lowercase().uppercase().lowercase().lowercase().uppercase().split("")[0].lowercase().uppercase() + "d")
+assert("Bd", tt2[0].lowercase().uppercase().lowercase().lowercase().uppercase().split("")[1].lowercase().uppercase() + "d")
+assert("aad", tt.lowercase().uppercase().lowercase().lowercase().uppercase().lowercase() + "d")
+assert("AAd", tt.lowercase().uppercase().lowercase().lowercase().uppercase() + "d")
+assert("abd", tt2[0].lowercase().uppercase().lowercase().lowercase().uppercase().lowercase() + "d")
+assert("ABd", tt2[0].lowercase().uppercase().lowercase().lowercase().uppercase() + "d")
