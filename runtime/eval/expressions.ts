@@ -441,65 +441,7 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             val = (expr.property as StringLiteral).value
         } else if (expr.property.kind == "MemberExpr") {
             const member = expr.property as MemberExpr
-            function merge(property: MemberExpr, obj: ObjectVal) {
-                if (property.object.kind == "Identifier") {
-                    const ident = property.object as Identifier
-                    const retVal = obj.properties.get(ident.symbol)
-                    if (retVal == null) {
-                        throw "cannot access property that does not exist from object " + JSON.stringify(ident)
-                    }
-                    property.object = { kind: "EvaluatedExpr", evaluatedVal: retVal } as EvaluatedExpr
-                    return evaluate(property, env)
-                } else if (property.object.kind == "CallExpr") {
-                    const ident = property.object as CallExpr
-                    const ttt = evaluate({
-                        kind: "MemberExpr",
-                        object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
-                        property: ident,
-                        computed: false
-                    } as MemberExpr, env)
-                    member.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
-                    return evaluate(member, env)
-                } else if (property.object.kind == "MemberExpr") {
-                    const proObj = property.object as MemberExpr
-                    
-                    const ttt = evaluate({
-                        kind: "MemberExpr",
-                        object: { kind: "EvaluatedExpr", evaluatedVal: objVal } as EvaluatedExpr,
-                        property: proObj.object ,
-                        computed: false
-                    } as MemberExpr, env)
-
-                    const ttt2 = evaluate({
-                        kind: "MemberExpr",
-                        object: { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr,
-                        property: proObj.property ,
-                        computed: false
-                    } as MemberExpr, env)
-
-                    property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt2 } as EvaluatedExpr
-                
-                    if (property.property.kind == "MemberExpr") {
-                        return evaluate(property, env)
-                    } else if (property.property.kind == "NumericLiteral" && isRuntimeArray(obj)) {
-                        const ident = property.object as MemberExpr
-                        const num = (property.property as NumericLiteral).value
-                        const ttt = evaluate({
-                            kind: "MemberExpr",
-                            object: { kind: "EvaluatedExpr", evaluatedVal: (obj as ArrayVal).array[num] } as EvaluatedExpr,
-                            property: ident.object,
-                            computed: false
-                        } as MemberExpr, env)
-                        member.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
-                        return evaluate(member, env)
-                    } else {
-                        throw "Unsupported member access chain " + JSON.stringify(property)
-                    }
-                } else {
-                    throw "Could not handle MemberExpr " + JSON.stringify(member)
-                }
-            }
-            return merge(member, objVal);                    
+            return mergeObjMemberExpr(member, objVal, env);
         } else {
             val = getRuntimeValue(evaluate(expr.property, env))
             const arrayVal = obj as ArrayVal
@@ -546,4 +488,63 @@ export function eval_native_block(declaration: NativeBlock, env: Environment): R
     let result = ts.transpile(code);
     const resp = eval(result)
     return convertAnyNativeIntoRuntimeVal(resp)
+}
+
+function mergeObjMemberExpr(property: MemberExpr, obj: ObjectVal, env: Environment) {
+    if (property.object.kind == "Identifier") {
+        const ident = property.object as Identifier
+        const retVal = obj.properties.get(ident.symbol)
+        if (retVal == null) {
+            throw "cannot access property that does not exist from object " + JSON.stringify(ident)
+        }
+        property.object = { kind: "EvaluatedExpr", evaluatedVal: retVal } as EvaluatedExpr
+        return evaluate(property, env)
+    } else if (property.object.kind == "CallExpr") {
+        const ident = property.object as CallExpr
+        const ttt = evaluate({
+            kind: "MemberExpr",
+            object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
+            property: ident,
+            computed: false
+        } as MemberExpr, env)
+        property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
+        return evaluate(property, env)
+    } else if (property.object.kind == "MemberExpr") {
+        const proObj = property.object as MemberExpr
+
+        const ttt = evaluate({
+            kind: "MemberExpr",
+            object: { kind: "EvaluatedExpr", evaluatedVal: obj } as EvaluatedExpr,
+            property: proObj.object,
+            computed: false
+        } as MemberExpr, env)
+
+        const ttt2 = evaluate({
+            kind: "MemberExpr",
+            object: { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr,
+            property: proObj.property,
+            computed: false
+        } as MemberExpr, env)
+
+        property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt2 } as EvaluatedExpr
+
+        if (property.property.kind == "MemberExpr") {
+            return evaluate(property, env)
+        } else if (property.property.kind == "NumericLiteral" && isRuntimeArray(obj)) {
+            const ident = property.object as MemberExpr
+            const num = (property.property as NumericLiteral).value
+            const ttt = evaluate({
+                kind: "MemberExpr",
+                object: { kind: "EvaluatedExpr", evaluatedVal: (obj as ArrayVal).array[num] } as EvaluatedExpr,
+                property: ident.object,
+                computed: false
+            } as MemberExpr, env)
+            property.object = { kind: "EvaluatedExpr", evaluatedVal: ttt } as EvaluatedExpr
+            return evaluate(property, env)
+        } else {
+            throw "Unsupported member access chain " + JSON.stringify(property)
+        }
+    } else {
+        throw "Could not handle MemberExpr " + JSON.stringify(property)
+    }
 }
