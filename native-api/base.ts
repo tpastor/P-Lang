@@ -50,7 +50,7 @@ export function createBaseGlobalEnv() {
 
     env.declareVar("assertNotNull", MK_NATIVE_FN((args, scope) => {
         if (getRuntimeValue(args[0]) != null) {
-            throw "Elements " + JSON.stringify(args) + " should be the same"
+            throw "Element " + JSON.stringify(args) + " should not be null"
         }
         return MK_NULL();
     }), true, false)

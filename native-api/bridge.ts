@@ -87,34 +87,34 @@ function convertObjectSpecialCases(obj:ObjectVal, env: Environment) {
 function convertNativeObjectIntoMap(obj) {
     const map: Map<string, RuntimeVal> = new Map();
 
-    for (const key of Object.keys(obj)) {
-        const val = obj[key];
+    for (const prop of getProps(obj)) {
+        const {val} = prop;
+        const name = prop.name as string
         if (typeof val == "string") {
-            map.set(key, MK_STRING((val as string)))
+            map.set(name, MK_STRING((val as string)))
         }
         else if (typeof val == "number") {
-            map.set(key, MK_NUMBER((val as number)))
+            map.set(name, MK_NUMBER((val as number)))
         }
         else if (typeof val == "boolean") {
-            map.set(key, MK_BOOL((val as boolean)))
+            map.set(name, MK_BOOL((val as boolean)))
         }
         else if (typeof val == "function") {
-            map.set(key, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((val as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv))))))
+            map.set(name, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((val as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv))))))
         }
         else if (typeof val == "object") {
-            map.set(key, MK_OBJECT(convertNativeObjectIntoMap(val)))
+            map.set(name, MK_OBJECT(convertNativeObjectIntoMap(val)))
         }
     }
-
-    getMethods(obj).forEach(methodName => map.set(methodName, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((obj[methodName] as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv)))))))
+    
     return map;
 }
 
-const getMethods = (obj):string[] => {
+  const getProps = (obj) => {
     let properties = new Set()
     let currentObj = obj
     do {
       Object.getOwnPropertyNames(currentObj).filter(item => !denyListMethods.has(item)).map(item => properties.add(item))
     } while ((currentObj = Object.getPrototypeOf(currentObj)))
-    return Array.from(properties.keys()).filter((item) => typeof obj[item as number] === 'function') as string[]
+    return Array.from(properties.keys()).map((item) => ({ type: typeof obj[item as number], val: obj[item as number], name: item }) ) 
   }
