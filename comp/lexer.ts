@@ -13,6 +13,8 @@ export enum TokenType {
   Fn,
   Native,
   NativeBlock,
+  Export,
+  Import,
 
   If,
   Else,
@@ -54,6 +56,8 @@ const KEYWORDS: Record<string, TokenType> = {
   else: TokenType.Else,
   native: TokenType.Native,
   foreach: TokenType.Foreach,
+  export: TokenType.Export,
+  import: TokenType.Import,
 };
 
 // Represents a single token from the source-code.
@@ -281,6 +285,8 @@ export function tokenize(sourceCode: string): Token[] {
         "Unrecognized character found in source: ",
         src[0].charCodeAt(0),
         src[0],
+        fileName,
+        lineNumber      
       );
       process.exit(1);
     }

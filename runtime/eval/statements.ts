@@ -49,16 +49,16 @@
         const rets = val as FunctionReturn;        
         for(let i = 0; i < declaration.identifier.length; i++) {
           const id = declaration.identifier[i]        
-          env.declareVar(id, rets.values[i] || val, declaration.constant)
+          env.declareVar(id, rets.values[i] || val, declaration.constant, declaration.isExport)
         }
         return rets.values[declaration.identifier.length - 1]
       } else {
-        return env.declareVar(declaration.identifier[0], val, declaration.constant)
+        return env.declareVar(declaration.identifier[0], val, declaration.constant, declaration.isExport)
       }
       
     } else {
       let value = declaration.isArray ? MK_ARRAY([]) : MK_NULL();    
-      return env.declareVar(declaration.identifier[0], value, declaration.constant);
+      return env.declareVar(declaration.identifier[0], value, declaration.constant, declaration.isExport);
     }
   }
 
@@ -77,5 +77,5 @@
     } as FunctionVal;
 
     fn.properties = createFunctionExtensions(fn, env)
-    return env.declareVar(declaration.name, fn, true);
+    return env.declareVar(declaration.name, fn, true, false);
   }

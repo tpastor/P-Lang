@@ -1,4 +1,4 @@
-import { MK_STRING, NumberVal, RuntimeVal } from "./values";
+import { MK_NULL, MK_STRING, NumberVal, RuntimeVal } from "./values";
 import {
     AggregatedExpr,
     ArrayDeclaration,
@@ -12,6 +12,7 @@ import {
     FunctionDeclaration,
     Identifier,
     IfExpr,
+    Import,
     MemberExpr,
     NativeBlock,
     NumericLiteral,
@@ -26,7 +27,7 @@ import {
 } from "../comp/ast";
 import Environment from "./environment";
 import { eval_aggr_expr, eval_array_declaration, eval_function_declaration, eval_program, eval_var_declaration } from "./eval/statements";
-import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_foreach_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
+import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_foreach_expr, eval_identifier, eval_if_expr, eval_import, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
     switch (astNode.kind) {
@@ -42,17 +43,17 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
         case "ObjectLiteral":
             return eval_object_expr(astNode as ObjectLiteral, env);
         case "IfExpr":
-            return eval_if_expr(astNode as IfExpr, env);            
+            return eval_if_expr(astNode as IfExpr, env);
         case "WhileExpr":
-            return eval_while_expr(astNode as WhileExpr, env);                    
+            return eval_while_expr(astNode as WhileExpr, env);
         case "ForExpr":
-            return eval_for_expr(astNode as ForExpr, env);                        
+            return eval_for_expr(astNode as ForExpr, env);
         case "ForeachExpr":
-            return eval_foreach_expr(astNode as ForeachExpr, env);                            
+            return eval_foreach_expr(astNode as ForeachExpr, env);
         case "MemberExpr":
-            return eval_member_expr(astNode as MemberExpr, env);                        
+            return eval_member_expr(astNode as MemberExpr, env);
         case "CallExpr":
-            return eval_call_expr(astNode as CallExpr, env);            
+            return eval_call_expr(astNode as CallExpr, env);
         case "AssignmentExpr":
             return eval_assignment(astNode as AssignmentExpr, env);
         case "UnaryExpr":
@@ -60,7 +61,7 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
         case "BinaryExpr":
             return eval_binary_expr(astNode as BinaryExpr, env);
         case "Program":
-            return eval_program(astNode as Program, env);        
+            return eval_program(astNode as Program, env);
         case "FunctionDeclaration":
             return eval_function_declaration(astNode as FunctionDeclaration, env);
         case "VarDeclaration":
@@ -68,16 +69,20 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
         case "ArrayDeclaration":
             return eval_array_declaration(astNode as ArrayDeclaration, env);
         case "Return":
-            return eval_return(astNode as Return, env);    
+            return eval_return(astNode as Return, env);
         case "ContinueBreak":
-            return eval_break_continue(astNode as ContinueBreak, env);  
+            return eval_break_continue(astNode as ContinueBreak, env);
         case "AggregatedExpr":
-            return eval_aggr_expr(astNode as AggregatedExpr, env);  
+            return eval_aggr_expr(astNode as AggregatedExpr, env);
         case "NativeBlock":
-            return eval_native_block(astNode as NativeBlock, env)            
+            return eval_native_block(astNode as NativeBlock, env)
+        case "Import":
+            return eval_import(astNode as Import, env)
+        case "NOOP":
+            return MK_NULL()
         // this is the gate of hell
         case "EvaluatedExpr":
-            return (astNode as EvaluatedExpr).evaluatedVal;           
+            return (astNode as EvaluatedExpr).evaluatedVal;
         default:
             console.error(
                 "This AST Node has not yet been setup for interpretation.",
@@ -86,3 +91,4 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
             process.exit(0);
     }
 }
+

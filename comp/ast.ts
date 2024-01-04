@@ -27,22 +27,29 @@ export type NodeType =
   | "Identifier"
   | "UnaryExpr"
   | "NegationExpr"
-  | "BinaryExpr";
+  | "BinaryExpr"
+  | "Import"
+  | "NOOP";
 
 export interface Stmt {
   kind: NodeType;
   tokenForDebug?: Token
 }
 
-/**
- * Defines a block which contains many statements.
- * -  Only one program will be contained in a file.
- */
 export interface Program extends Stmt {
   kind: "Program";
   body: Stmt[];
 }
 
+export interface NOOP extends Stmt {
+  kind: "NOOP";
+}
+
+export interface Import extends Stmt {
+  kind: "Import";
+  fileName: string,
+  namespace?: string,
+}
 
 export interface VarDeclaration extends Stmt {
   kind: "VarDeclaration";
@@ -50,6 +57,7 @@ export interface VarDeclaration extends Stmt {
   identifier: string[],
   isArray: boolean,
   value?: Expr[],
+  isExport: boolean,
 }
 
 export interface AggregatedExpr extends Stmt {

@@ -5,6 +5,7 @@ export default class Environment {
     private parent?: Environment;
     private variables: Map<string, RuntimeVal>;
     private constants: Set<string>;
+    private exports: Set<string>;
     public isContinueSet:boolean = false;
     public isBreakSet: boolean = false; 
     public scopeOwner: Stmt|RuntimeVal;
@@ -13,6 +14,7 @@ export default class Environment {
         this.parent = parentENV;
         this.variables = new Map();
         this.constants = new Set();
+        this.exports = new Set();
         this.scopeOwner = scopeOwner;
     }
 
@@ -20,6 +22,7 @@ export default class Environment {
         varname: string,
         value: RuntimeVal,
         constant: boolean,
+        isExport: boolean,
     ): RuntimeVal {
         if (this.variables.has(varname)) {
             throw `Cannot declare variable ${varname}. As it already is defined.`;
@@ -32,6 +35,9 @@ export default class Environment {
         this.variables.set(varname, value);
         if (constant) {
             this.constants.add(varname);
+        }
+        if (isExport) {
+            this.exports.add(varname)
         }
         return value;
     }
@@ -50,6 +56,14 @@ export default class Environment {
 
     public getVariablesInLocalScope(): string[] {
         return [...this.variables.keys()]
+    }
+
+    public addExport(exportName: string) {
+        this.exports.add(exportName)
+    }
+
+    public getExports(): string[] {
+        return Array.from(this.exports.values())
     }
 
     public lookupVar(varname: string): RuntimeVal {

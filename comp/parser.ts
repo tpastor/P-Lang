@@ -11,6 +11,7 @@ import {
   FunctionDeclaration,
   Identifier,
   IfExpr,
+  Import,
   MemberExpr,
   NativeBlock,
   NumericLiteral,
@@ -99,6 +100,7 @@ export default class Parser {
         return this.parse_if_declaration(program);
       case TokenType.Fn:
         return this.parse_fn_declaration(program);
+      case TokenType.Export:
       case TokenType.Let:
       case TokenType.Const:
         return this.parse_var_declaration(program);
@@ -107,6 +109,8 @@ export default class Parser {
         return this.parse_break_continue(program)
       case TokenType.Return:
         return this.parse_return(program)
+      case TokenType.Import:
+        return this.parse_import(program)
       default:
         return this.parse_expr(program);
     }
@@ -511,6 +515,7 @@ export default class Parser {
   // ( LET | CONST ) IDENT1, IDENT2 = FUNC ....(;)
   parse_var_declaration(program: Program): Stmt {
     const token = this.at()
+    const isExport: boolean = token.type == TokenType.Export ? this.eat() && true : false
     const isConstant = this.eat().type == TokenType.Const;
     const identifiers = this.parse_identifier_list(program)
     const identifier = identifiers[0]
@@ -528,7 +533,8 @@ export default class Parser {
         identifier: [identifier],
         constant: false,
         isArray: false,
-        tokenForDebug: token
+        tokenForDebug: token,
+        isExport: isExport,
       } as VarDeclaration;
     }
 
@@ -552,7 +558,8 @@ export default class Parser {
         identifier: [identifier],
         constant: isConstant,
         isArray: false,
-        tokenForDebug: token
+        tokenForDebug: token,
+        isExport: isExport,
       } as VarDeclaration)
 
       stmts.push(
@@ -586,7 +593,8 @@ export default class Parser {
       identifier: identifiers,
       constant: isConstant,
       isArray: false,
-      tokenForDebug: token
+      tokenForDebug: token,
+      isExport: isExport,
     } as VarDeclaration;
 
     if (this.at().type == TokenType.Semicolon) {
@@ -819,6 +827,12 @@ export default class Parser {
         }
       }
 
+      // to handle negative numbers .........
+      case TokenType.BinaryOperator:
+        const val = this.eat().value
+        if (val == "-" && this.at().type == TokenType.Number) {
+          return { kind: "NumericLiteral", value: parseFloat(val + this.eat().value), tokenForDebug: token } as NumericLiteral;
+        }
       // Unidentified Tokens and Invalid Code Reached
       default:
         console.error("Unexpected token found during parsing!", this.at());
@@ -936,8 +950,28 @@ export default class Parser {
     }
     return undefined
   }
-}
 
+  private parse_import(program: Program): Stmt {
+    this.eat()
+    const args: Expr[] = this.parse_args(program)
+    if (args.length == 0 || args.length > 2) {
+      throw "import expects one or 2 parameters, got " + args.length
+    }
+
+    if ((args.length == 1 && args[0].kind != "StringLiteral") || args.length == 2 && args[1].kind != "StringLiteral") {
+      throw "import args must be identifiers " + JSON.stringify(args)
+    }
+
+    if (this.at().type == TokenType.Semicolon) {
+      this.eat()
+    }
+
+    const namespace = args.length == 2 ? (args[0] as StringLiteral).value : null
+    const fileName = args.length == 2 ? (args[1] as StringLiteral).value : (args[0] as StringLiteral).value
+
+    return { kind: "Import", fileName: fileName, namespace: namespace } as Import;
+  }
+}
 
 // Assignment
 // Object

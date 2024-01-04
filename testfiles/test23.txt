@@ -1,0 +1,12 @@
+import("pastot", "testfiles/test22.txt")
+print(pastot.a.t)
+print(pastot.b.t())
+assert("test", pastot.a.t) 
+assert(-1, pastot.b.t()) 
+
+
+import("testfiles/test22.txt")
+assert("test", a.t) 
+assert(-1, b.t()) 
+
+assert(false, listVariables().has("c"))

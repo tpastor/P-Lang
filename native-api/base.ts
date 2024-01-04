@@ -7,42 +7,42 @@ const fs = require('fs');
 
 export function createGlobalEnv() {
     const env = new Environment();
-    env.declareVar("true", MK_BOOL(true), true);
-    env.declareVar("false", MK_BOOL(false), true);
-    env.declareVar("null", MK_NULL(), true);
-    env.declareVar("sleep", MK_NATIVE_FN(sleep), true)
-    env.declareVar("print", MK_NATIVE_FN(print), true)
-    env.declareVar("system", MK_NATIVE_FN(system), true)
-    env.declareVar("listObjectProps", MK_NATIVE_FN(list), true)
-    env.declareVar("listVariables", MK_NATIVE_FN(variables), true)
-    env.declareVar("mergeObj", MK_NATIVE_FN(merge), true)
-    env.declareVar("remotePropObj", MK_NATIVE_FN(remove), true)
-    env.declareVar("httpGet", MK_NATIVE_FN(httpGet), true)
-    env.declareVar("httpPost", MK_NATIVE_FN(httpPost), true)
-    env.declareVar("readFile", MK_NATIVE_FN(readFile), true)
-    env.declareVar("writeFile", MK_NATIVE_FN(writeFile), true)
-    env.declareVar("array", MK_NATIVE_FN(array), true)
+    env.declareVar("true", MK_BOOL(true), true, false);
+    env.declareVar("false", MK_BOOL(false), true, false);
+    env.declareVar("null", MK_NULL(), true, false);
+    env.declareVar("sleep", MK_NATIVE_FN(sleep), true, false)
+    env.declareVar("print", MK_NATIVE_FN(print), true, false)
+    env.declareVar("system", MK_NATIVE_FN(system), true, false)
+    env.declareVar("listObjectProps", MK_NATIVE_FN(list), true, false)
+    env.declareVar("listVariables", MK_NATIVE_FN(variables), true, false)
+    env.declareVar("mergeObj", MK_NATIVE_FN(merge), true, false)
+    env.declareVar("remotePropObj", MK_NATIVE_FN(remove), true, false)
+    env.declareVar("httpGet", MK_NATIVE_FN(httpGet), true, false)
+    env.declareVar("httpPost", MK_NATIVE_FN(httpPost), true, false)
+    env.declareVar("readFile", MK_NATIVE_FN(readFile), true, false)
+    env.declareVar("writeFile", MK_NATIVE_FN(writeFile), true, false)
+    env.declareVar("array", MK_NATIVE_FN(array), true, false)
     env.declareVar("exit", MK_NATIVE_FN((args, scope) => {
         process.exit((args[0] as NumberVal).value)
-    }), true)
+    }), true, false)
 
     env.declareVar("time", MK_NATIVE_FN((args, scope) => {
         return MK_NUMBER(Date.now())
-    }), true)
+    }), true, false)
 
     env.declareVar("assert", MK_NATIVE_FN((args, scope) => {
         if (getRuntimeValue(args[0]) != getRuntimeValue(args[1])) {
             throw "Elements " + JSON.stringify(args) + " should be the same"
         }
         return MK_NULL();
-    }), true)
+    }), true, false)
 
     env.declareVar("assertNotNull", MK_NATIVE_FN((args, scope) => {
         if (getRuntimeValue(args[0]) != null) {
             throw "Elements " + JSON.stringify(args) + " should be the same"
         }
         return MK_NULL();
-    }), true)
+    }), true, false)
 
     return env;
 }

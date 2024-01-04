@@ -1,0 +1,4 @@
+// to be imported - not a test
+export let a = { t: "test"}
+export let b = { t: fn () { return -1}}
+let c = 1
