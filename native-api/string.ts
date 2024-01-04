@@ -1,5 +1,5 @@
 import { FunctionCall, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "../runtime/values";
-import { getRuntimeValue } from "./base";
+import { getNativeValueFromRuntimeValue } from "./bridge";
 
 export function createNativeStringFunctions(str: string): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
@@ -27,13 +27,13 @@ function chartAt(str: string): FunctionCall {
         if (args.length != 1 && args[0].type != "number") {
             throw "parameter must be a number " + JSON.stringify(args)
         }
-        return MK_STRING(str.charAt(getRuntimeValue(args[0]) as number))
+        return MK_STRING(str.charAt(getNativeValueFromRuntimeValue(args[0]) as number))
     }
 }
 
 function substring(str: string): FunctionCall {
     return (args, scope) => {
-        return MK_STRING(str.substring(getRuntimeValue(args[0]) as number, getRuntimeValue(args[1]) as number))
+        return MK_STRING(str.substring(getNativeValueFromRuntimeValue(args[0]) as number, getNativeValueFromRuntimeValue(args[1]) as number))
     }
 }
 

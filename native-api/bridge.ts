@@ -1,7 +1,6 @@
 import Environment from "../runtime/environment";
 import { eval_function } from "../runtime/eval/expressions";
 import { ArrayVal, BooleanVal, FunctionReturn, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../runtime/values";
-import { getRuntimeValue } from "./base";
 
 const denyListMethods = new Set(["constructor", "__defineGetter__", "__defineSetter__", "hasOwnProperty", "isPrototypeOf", "__lookupGetter__",
  "__lookupSetter__", "propertyIsEnumerable", "toString", "valueOf", "toLocaleString", "__proto__"])
@@ -25,7 +24,7 @@ export function convertAnyNativeIntoRuntimeVal(val): RuntimeVal {
         return MK_BOOL((val as boolean))
     }
     else if (typeof val == "function") {
-        return MK_NATIVE_FN((call) => (val as Function).call(null, ...call.map((rv) => getRuntimeValue(rv))))
+        return MK_NATIVE_FN((call) => (val as Function).call(null, ...call.map((rv) => getNativeValueFromRuntimeValue(rv))))
     }
     else if (typeof val == "object") {
         return MK_OBJECT(convertNativeObjectIntoMap(val))
@@ -100,7 +99,7 @@ function convertNativeObjectIntoMap(obj) {
             map.set(name, MK_BOOL((val as boolean)))
         }
         else if (typeof val == "function") {
-            map.set(name, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((val as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv))))))
+            map.set(name, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((val as Function).call(obj, ...call.map((rv) => getNativeValueFromRuntimeValue(rv))))))
         }
         else if (typeof val == "object") {
             map.set(name, MK_OBJECT(convertNativeObjectIntoMap(val)))
@@ -109,6 +108,21 @@ function convertNativeObjectIntoMap(obj) {
     
     return map;
 }
+
+export function getNativeValueFromRuntimeValue(val: RuntimeVal) {
+    switch (val.type) {
+      case "number":
+        return (val as NumberVal).value
+      case "boolean":
+        return (val as BooleanVal).value
+      case "object":
+        return isRuntimeString(val) ? (val as StringVal).value : val;
+      case "null":
+        return null
+      default:
+        throw "Element does not have a runtime value " + JSON.stringify(val)
+    }
+  }
 
   const getProps = (obj) => {
     let properties = new Set()

@@ -1,9 +1,9 @@
 import Environment from "../runtime/environment";
 import { eval_function } from "../runtime/eval/expressions";
 import { ArrayVal, BooleanVal, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
-import { convertNativeIntoObject } from "./bridge";
+import { convertNativeIntoObject, getNativeValueFromRuntimeValue } from "./bridge";
 import { makeGet, makePost } from "./http";
-const fs = require('fs');
+import fs = require('fs');
 
 let __globalBaseEnv = null;
 
@@ -16,7 +16,7 @@ export function createGlobalEnv() {
     return env;
 }
 
-export function createBaseGlobalEnv() {
+function createBaseGlobalEnv() {
     const env = new Environment();
     env.declareVar("true", MK_BOOL(true), true, false);
     env.declareVar("false", MK_BOOL(false), true, false);
@@ -42,14 +42,14 @@ export function createBaseGlobalEnv() {
     }), true, false)
 
     env.declareVar("assert", MK_NATIVE_FN((args, scope) => {
-        if (getRuntimeValue(args[0]) != getRuntimeValue(args[1])) {
+        if (getNativeValueFromRuntimeValue(args[0]) != getNativeValueFromRuntimeValue(args[1])) {
             throw "Elements " + JSON.stringify(args) + " should be the same"
         }
         return MK_NULL();
     }), true, false)
 
     env.declareVar("assertNotNull", MK_NATIVE_FN((args, scope) => {
-        if (getRuntimeValue(args[0]) != null) {
+        if (getNativeValueFromRuntimeValue(args[0]) != null) {
             throw "Element " + JSON.stringify(args) + " should not be null"
         }
         return MK_NULL();
@@ -60,84 +60,84 @@ export function createBaseGlobalEnv() {
     return env;
 }
 
-export function array(args: RuntimeVal[], scope: Environment) {
+function array(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY(args)
 };
 
-export function httpGet(args: RuntimeVal[], scope: Environment): RuntimeVal {
+function httpGet(args: RuntimeVal[], scope: Environment): RuntimeVal {
     return convertNativeIntoObject(makeGet((args[0] as StringVal).value))
 }
 
-export function httpPost(args: RuntimeVal[], scope: Environment): RuntimeVal {
+function httpPost(args: RuntimeVal[], scope: Environment): RuntimeVal {
     return convertNativeIntoObject(makePost((args[0] as StringVal).value, (args[1] as StringVal).value))
 }
 
-export function readFile(args: RuntimeVal[], scope: Environment) {
+function readFile(args: RuntimeVal[], scope: Environment) {
     if (args.length == 0 || args[0].type != "object") {
         throw "Expected string as first argument with filename"
     }
 
-    const data = fs.readFileSync(getRuntimeValue(args[0]),
+    const data = fs.readFileSync(getNativeValueFromRuntimeValue(args[0]) as string,
         { encoding: 'utf8', flag: 'r' });
     return MK_STRING(data)
 };
 
-export function writeFile(args: RuntimeVal[], scope: Environment) {
+function writeFile(args: RuntimeVal[], scope: Environment) {
     if (args.length < 2 || args[0].type != "object" || args[1].type != "object") {
         throw "Expected string as first argument with filename and data string as the second"
     }
 
-    fs.writeFileSync(getRuntimeValue(args[0]), getRuntimeValue(args[1]));
+    fs.writeFileSync(getNativeValueFromRuntimeValue(args[0]) as string, getNativeValueFromRuntimeValue(args[1]) as string);
     return MK_NULL()
 };
 
-export function remove(args: RuntimeVal[], scope: Environment) {
+function remove(args: RuntimeVal[], scope: Environment) {
     (args[0] as ObjectVal).properties.delete((args[1] as StringVal).value)
     return args[0]
 }
 
-export function list(args: RuntimeVal[], scope: Environment) {
+function list(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY([...(args[0] as ObjectVal).properties.keys()].map(key => MK_STRING(key)))
 }
 
-export function variables(args: RuntimeVal[], scope: Environment) {
+function variables(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY(scope.getVariablesInLocalScope().map(MK_STRING))
 }
 
-export function merge(args: RuntimeVal[], scope: Environment) {
+function merge(args: RuntimeVal[], scope: Environment) {
     return MK_OBJECT(args.map(rt => rt as ObjectVal).map(obj => obj.properties).reduce((accum, newVal) => new Map([...accum.entries(), ...newVal.entries()]), new Map<string, RuntimeVal>()))
 }
 
-export function system(args: RuntimeVal[], scope: Environment) {
+function system(args: RuntimeVal[], scope: Environment) {
     return MK_STRING(require('child_process').execSync((args[0] as StringVal).value).toString());
 }
 
-export function sleep(args: RuntimeVal[], scope: Environment) {
+function sleep(args: RuntimeVal[], scope: Environment) {
     const {execSync} = require('child_process');
     execSync('sleep ' + (args[0] as NumberVal).value);
     return MK_NULL()
 }
 
-export function print(args: RuntimeVal[], scope: Environment) {
+function print(args: RuntimeVal[], scope: Environment) {
     args.forEach(arg => {
         switch (arg.type) {
             case "object":
                 const isArray: boolean = isRuntimeArray(arg)
                 if (isArray) {
                     const array = arg as ArrayVal
-                    console.log("[" + array.array.map(item => getRuntimeValue(item)).join(",") + "]");
+                    console.log("[" + array.array.map(item => getNativeValueFromRuntimeValue(item)).join(",") + "]");
                     break;
                 }
                 const toString: FunctionVal = getObjectToString(arg as ObjectVal)
                 if (toString) {
                     print([eval_function(toString, [], scope)], scope)
                 } else {
-                    console.log(getRuntimeValue(arg))
+                    console.log(getNativeValueFromRuntimeValue(arg))
                 }
                 break;
             case "number":
             case "boolean":
-                console.log(getRuntimeValue(arg))
+                console.log(getNativeValueFromRuntimeValue(arg))
                 break;
             default:
                 console.log(arg)
@@ -145,20 +145,3 @@ export function print(args: RuntimeVal[], scope: Environment) {
     })
     return MK_NULL()
 };
-
-
-export function getRuntimeValue(val: RuntimeVal) {
-    switch (val.type) {
-        case "number":
-            return (val as NumberVal).value
-        case "boolean":
-            return (val as BooleanVal).value
-        case "object":
-            return isRuntimeString(val) ? (val as StringVal).value : val;
-        case "null":
-            return null
-        default:
-            throw "Element does not have a runtime value " + JSON.stringify(val)
-    }
-
-}

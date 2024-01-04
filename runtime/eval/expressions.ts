@@ -2,8 +2,8 @@ import * as ts from "typescript";
 import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, EvaluatedExpr, ForExpr, ForeachExpr, Identifier, IfExpr, Import, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
 import { evaluate } from "../interpreter";
 import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
-import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative } from "../../native-api/bridge";
-import { createGlobalEnv, getRuntimeValue } from "../../native-api/base";
+import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative, getNativeValueFromRuntimeValue } from "../../native-api/bridge";
+import { createGlobalEnv } from "../../native-api/base";
 import Environment from "../environment";
 import Parser from "../../comp/parser";
 import { unbackslash } from "../../main_helper";
@@ -446,7 +446,7 @@ export function eval_member_expr(expr: MemberExpr, env: Environment): RuntimeVal
             const member = expr.property as MemberExpr
             return mergeObjMemberExpr(member, objVal, env);
         } else {
-            val = getRuntimeValue(evaluate(expr.property, env))
+            val = getNativeValueFromRuntimeValue(evaluate(expr.property, env))
             const arrayVal = obj as ArrayVal
             return arrayVal.array[val]
         }
