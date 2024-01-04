@@ -1,3 +1,7 @@
-p-lang language -> lexer/parser|AST/interpreter
+p-lang script language -> lexer/parser/interpreter
+
+"scraply" done fully in js (no dep/codegen)
+
+
 
 

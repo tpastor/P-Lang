@@ -1,3 +1,4 @@
+// depends on test22.txt
 import("pastot", "testfiles/test22.txt")
 print(pastot.a.t)
 print(pastot.b.t())

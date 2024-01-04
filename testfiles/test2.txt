@@ -4,3 +4,4 @@ let a = 5
 let b = "test"
 let d = c + b
 let e = d + (a + 1)
+assert("test\\"testtest", d)
