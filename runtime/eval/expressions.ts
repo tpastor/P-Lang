@@ -496,7 +496,12 @@ export function eval_native_block(declaration: NativeBlock, env: Environment): R
 export function eval_import(importExpr: Import, env: Environment): RuntimeVal {
     const fs = require('fs');
     const parser = new Parser();
-    const source = fs.readFileSync(importExpr.fileName, 'utf8')
+    let source;
+    try {
+    source = fs.readFileSync(importExpr.fileName, 'utf8')
+    } catch(ex) {
+        throw new Error("Could not load file " + importExpr, { cause: ex });
+    }
     const newEnv = createGlobalEnv();
     const fileName = "###file:" + importExpr.fileName + "#"
     const program: Stmt = parser.produceAST(unbackslash(fileName + source));
