@@ -1,12 +1,9 @@
 import * as ts from "typescript";
-import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, EvaluatedExpr, ForExpr, ForeachExpr, Identifier, IfExpr, Import, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
+import { AssignmentExpr, BinaryExpr, CallExpr, ContinueBreak, EvaluatedExpr, ForExpr, ForeachExpr, Identifier, IfExpr, MemberExpr, NativeBlock, NumericLiteral, ObjectLiteral, Return, Stmt, StringLiteral, UnaryExpr, VarDeclaration, WhileExpr } from "../../comp/ast";
 import { evaluate } from "../interpreter";
-import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
+import { ArrayVal, BooleanVal, DelegatedCall, FunctionReturn, FunctionVal, MK_BOOL, MK_FUNCTION_RETURN, MK_NULL, MK_NUMBER, MK_STRING, NativeFnVal, NumberVal, ObjectVal, RuntimeVal, StringVal, isRuntimeArray, isRuntimeString } from "../values";
 import { convertAnyNativeIntoRuntimeVal, convertAnyRuntimeValIntoNative, getNativeValueFromRuntimeValue } from "../../native-api/bridge";
-import { createGlobalEnv } from "../../native-api/base";
 import Environment from "../environment";
-import Parser from "../../comp/parser";
-import { unbackslash } from "../../main_helper";
 
 function eval_numeric_binary_expr(
     lhs: NumberVal,
@@ -491,33 +488,6 @@ export function eval_native_block(declaration: NativeBlock, env: Environment): R
     let result = ts.transpile(code);
     const resp = eval(result)
     return convertAnyNativeIntoRuntimeVal(resp)
-}
-
-export function eval_import(importExpr: Import, env: Environment): RuntimeVal {
-    const fs = require('fs');
-    const parser = new Parser();
-    let source;
-    try {
-    source = fs.readFileSync(importExpr.fileName, 'utf8')
-    } catch(ex) {
-        throw new Error("Could not load file " + importExpr, { cause: ex });
-    }
-    const newEnv = createGlobalEnv();
-    const fileName = "###file:" + importExpr.fileName + "#"
-    const program: Stmt = parser.produceAST(unbackslash(fileName + source));
-    env.scopeOwner = program
-    evaluate(program, newEnv)
-    const vars: string[] = newEnv.getExports()
-    if (importExpr.namespace) {
-        const map: Map<string, RuntimeVal> = new Map()
-        vars.forEach(item => map.set(item, newEnv.lookupVar(item)))
-        return env.declareVar(importExpr.namespace, MK_OBJECT(map), true, false)
-    } else {
-        vars.forEach(element => {
-            env.declareVar(element, newEnv.lookupVar(element), true, false)
-        });
-    }
-    return MK_NULL();
 }
 
 function mergeObjMemberExpr(property: MemberExpr, obj: ObjectVal, env: Environment) {

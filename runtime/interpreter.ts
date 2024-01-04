@@ -27,7 +27,8 @@ import {
 } from "../comp/ast";
 import Environment from "./environment";
 import { eval_aggr_expr, eval_array_declaration, eval_function_declaration, eval_program, eval_var_declaration } from "./eval/statements";
-import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_foreach_expr, eval_identifier, eval_if_expr, eval_import, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
+import { eval_assignment, eval_binary_expr, eval_break_continue, eval_call_expr, eval_for_expr, eval_foreach_expr, eval_identifier, eval_if_expr, eval_member_expr, eval_native_block, eval_object_expr, eval_return, eval_unary_expr, eval_while_expr } from "./eval/expressions";
+import { eval_import } from "./eval/eval";
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
     switch (astNode.kind) {
