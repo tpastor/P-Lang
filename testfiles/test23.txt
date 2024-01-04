@@ -16,3 +16,5 @@ assert("test", a.t)
 assert(-1, b.t()) 
 
 assert(false, listVariables().has("c"))
+
+

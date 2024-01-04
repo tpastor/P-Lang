@@ -1,0 +1,4 @@
+// math automatically exported from native nodejs
+assert(1, math.abs(-1))
+assert(2, math.min(2,3,4))
+assert(4, math.max(2,3,4))

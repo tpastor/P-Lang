@@ -4,7 +4,7 @@ import { ArrayVal, BooleanVal, FunctionReturn, FunctionVal, MK_ARRAY, MK_BOOL, M
 import { getRuntimeValue } from "./base";
 
 const denyListMethods = new Set(["constructor", "__defineGetter__", "__defineSetter__", "hasOwnProperty", "isPrototypeOf", "__lookupGetter__",
- "__lookupSetter__", "propertyIsEnumerable", "toString", "valueOf", "toLocaleString"])
+ "__lookupSetter__", "propertyIsEnumerable", "toString", "valueOf", "toLocaleString", "__proto__"])
 
 export function convertNativeIntoObject(obj): RuntimeVal {
     return MK_OBJECT(convertNativeObjectIntoMap(obj))
@@ -99,14 +99,14 @@ function convertNativeObjectIntoMap(obj) {
             map.set(key, MK_BOOL((val as boolean)))
         }
         else if (typeof val == "function") {
-            map.set(key, MK_NATIVE_FN((call) => (val as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv)))))
+            map.set(key, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((val as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv))))))
         }
         else if (typeof val == "object") {
             map.set(key, MK_OBJECT(convertNativeObjectIntoMap(val)))
         }
     }
 
-    getMethods(obj).forEach(methodName => map.set(methodName, MK_NATIVE_FN((call) => (obj[methodName] as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv))))))
+    getMethods(obj).forEach(methodName => map.set(methodName, MK_NATIVE_FN((call) => convertAnyNativeIntoRuntimeVal((obj[methodName] as Function).call(obj, ...call.map((rv) => getRuntimeValue(rv)))))))
     return map;
 }
 

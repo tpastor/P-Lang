@@ -5,7 +5,18 @@ import { convertNativeIntoObject } from "./bridge";
 import { makeGet, makePost } from "./http";
 const fs = require('fs');
 
+let __globalBaseEnv = null;
+
 export function createGlobalEnv() {
+    if (__globalBaseEnv == null) {
+        __globalBaseEnv = createBaseGlobalEnv()
+    }
+    const env = new Environment();
+    __globalBaseEnv.getVariablesInLocalScope().map(v => env.declareVar(v, __globalBaseEnv.lookupVar(v), true, false))
+    return env;
+}
+
+export function createBaseGlobalEnv() {
     const env = new Environment();
     env.declareVar("true", MK_BOOL(true), true, false);
     env.declareVar("false", MK_BOOL(false), true, false);
@@ -43,6 +54,8 @@ export function createGlobalEnv() {
         }
         return MK_NULL();
     }), true, false)
+
+    env.declareVar("math", convertNativeIntoObject(Math), true, false)
 
     return env;
 }
