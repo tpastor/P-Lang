@@ -1,10 +1,15 @@
 // depends on test22.txt
+
+assert(false, listVariables().has("pastot"))
+
 import("pastot", "testfiles/test22.txt")
 print(pastot.a.t)
 print(pastot.b.t())
 assert("test", pastot.a.t) 
 assert(-1, pastot.b.t()) 
 
+assert(false, listVariables().has("a"))
+assert(false, listVariables().has("b"))
 
 import("testfiles/test22.txt")
 assert("test", a.t) 
