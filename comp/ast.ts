@@ -79,7 +79,7 @@ export interface Expr extends Stmt { }
 
 export interface AssignmentExpr extends Expr {
   kind: "AssignmentExpr";
-  assigne: Expr,
+  assignee: Expr,
   value: Expr,
 
 }

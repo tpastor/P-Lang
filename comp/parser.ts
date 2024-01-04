@@ -30,7 +30,7 @@ import {
 import { TokenType } from "./lexer";
 
 export default class Parser extends BaseParser {
-  
+
   protected parse_stmt(program: Program): Stmt {
     switch (this.at().type) {
       case TokenType.For:
@@ -56,6 +56,67 @@ export default class Parser extends BaseParser {
         return this.parse_import(program)
       default:
         return this.parse_expr(program);
+    }
+  }
+
+  private parse_primary_expr(program: Program): Expr {
+    const token = this.at()
+    const tk = this.at().type;
+
+    switch (tk) {
+      case TokenType.Identifier:
+        return { kind: "Identifier", symbol: this.eat().value } as Identifier;
+
+      case TokenType.Number:
+        return {
+          kind: "NumericLiteral",
+          value: parseFloat(this.eat().value),
+          tokenForDebug: token
+        } as NumericLiteral;
+
+      case TokenType.StringMark: {
+        return {
+          kind: "StringLiteral",
+          value: this.eat().value,
+          tokenForDebug: token
+        } as StringLiteral;
+      }
+
+      case TokenType.Negation: {
+        return this.parse_negation(program)
+      }
+      
+      case TokenType.OpenParen: {
+        this.eat(); 
+        const value = this.parse_expr(program);
+        this.expect(
+          TokenType.CloseParen,
+          "Unexpected token found inside parenthesized expression. Expected closing parenthesis.",
+        ); 
+        return value;
+      }
+
+      case TokenType.Fn: {
+        return this.parse_fn_declaration(program)
+      }
+
+      case TokenType.OpenBracket: {
+        const arrayDeclaration = this.parse_array_value_inline(program)
+        if (arrayDeclaration) {
+          return arrayDeclaration;
+        }
+      }
+
+      // to handle negative numbers .........
+      case TokenType.BinaryOperator:
+        const val = this.eat().value
+        if (val == "-" && this.at().type == TokenType.Number) {
+          return { kind: "NumericLiteral", value: parseFloat(val + this.eat().value), tokenForDebug: token } as NumericLiteral;
+        }
+      
+      default:
+        console.error("Unexpected token found during parsing!", this.at());
+        process.exit(1);
     }
   }
 
@@ -396,7 +457,7 @@ export default class Parser extends BaseParser {
     if (this.at().type == TokenType.Equals) {
       const token = this.eat(); // advance past equals
       const value = this.parse_assignment_expr(program);
-      return { value, assigne: left, kind: "AssignmentExpr", tokenForDebug: token } as AssignmentExpr;
+      return { value, assignee: left, kind: "AssignmentExpr", tokenForDebug: token } as AssignmentExpr;
     }
 
     return left;
@@ -408,7 +469,7 @@ export default class Parser extends BaseParser {
       return this.parse_comparison_expr(program);
     }
 
-    const token = this.eat(); // advance past open brace.
+    const token = this.eat(); 
 
     const properties = new Array<Property>();
 
@@ -420,7 +481,7 @@ export default class Parser extends BaseParser {
 
       // Allows shorthand key: pair -> { key, }
       if (this.at().type == TokenType.Comma) {
-        this.eat(); // advance past comma
+        this.eat(); 
         properties.push({ key, kind: "Property", tokenForDebug: token } as Property);
         continue;
       } // Allows shorthand key: pair -> { key }
@@ -458,6 +519,7 @@ export default class Parser extends BaseParser {
   // ( LET | CONST ) IDENT1, IDENT2 = FUNC ....(;)
   parse_var_declaration(program: Program): Stmt {
     const token = this.at()
+    // sourcery skip: remove-redundant-boolean
     const isExport: boolean = token.type == TokenType.Export ? this.eat() && true : false
     const isConstant = this.eat().type == TokenType.Const;
     const identifiers = this.parse_identifier_list(program)
@@ -465,7 +527,7 @@ export default class Parser extends BaseParser {
 
     if (this.at().type != TokenType.Equals || this.at().type == TokenType.Semicolon) {
       if (this.at().type == TokenType.Semicolon) {
-        this.eat(); // expect semicolon
+        this.eat();
       }
       if (isConstant) {
         throw "Must assign value to constant expression. No value provided.";
@@ -510,7 +572,7 @@ export default class Parser extends BaseParser {
           value: {
             kind: "Identifier",
             symbol: func.name,
-          }, assigne: {
+          }, assignee: {
             kind: "Identifier",
             symbol: identifier,
           }, kind: "AssignmentExpr",
@@ -529,7 +591,6 @@ export default class Parser extends BaseParser {
 
     }
 
-    //
     const declaration = {
       kind: "VarDeclaration",
       value: [this.parse_expr(program)],
@@ -577,7 +638,6 @@ export default class Parser extends BaseParser {
     return left;
   }
 
-  // Handle Addition & Subtraction Operations
   private parse_additive_expr(program: Program): Expr {
     const token = this.at()
     let left = this.parse_multiplicative_expr(program);
@@ -597,7 +657,6 @@ export default class Parser extends BaseParser {
     return left;
   }
 
-  // Handle Multiplication, Division & Modulo Operations
   private parse_multiplicative_expr(program: Program): Expr {
     const token = this.at()
     let left = this.parse_member_expr(program);
@@ -690,8 +749,7 @@ export default class Parser extends BaseParser {
 
       // non-computed values aka obj.expr
       if (operator.type == TokenType.Dot) {
-        computed = false;
-        // get identifier
+        computed = false;        
         property = this.parse_member_expr(program);
         if (property.kind != "Identifier" && property.kind != "CallExpr" && property.kind != "MemberExpr") {
           throw `Cannot use dot operator without right hand side being a identifier/CallExpr/MemberExpr`;
@@ -715,72 +773,6 @@ export default class Parser extends BaseParser {
     }
 
     return object;
-  }
-
-  // Parse Literal Values & Grouping Expressions
-  private parse_primary_expr(program: Program): Expr {
-    const token = this.at()
-    const tk = this.at().type;
-
-    // Determine which token we are currently at and return literal value
-    switch (tk) {
-      // User defined values.
-      case TokenType.Identifier:
-        return { kind: "Identifier", symbol: this.eat().value } as Identifier;
-
-      // Constants and Numeric Constants
-      case TokenType.Number:
-        return {
-          kind: "NumericLiteral",
-          value: parseFloat(this.eat().value),
-          tokenForDebug: token
-        } as NumericLiteral;
-
-      case TokenType.StringMark: {
-        return {
-          kind: "StringLiteral",
-          value: this.eat().value,
-          tokenForDebug: token
-        } as StringLiteral;
-      }
-
-      case TokenType.Negation: {
-        return this.parse_negation(program)
-      }
-
-      // Grouping Expressions
-      case TokenType.OpenParen: {
-        this.eat(); // eat the opening paren
-        const value = this.parse_expr(program);
-        this.expect(
-          TokenType.CloseParen,
-          "Unexpected token found inside parenthesized expression. Expected closing parenthesis.",
-        ); // closing paren
-        return value;
-      }
-
-      case TokenType.Fn: {
-        return this.parse_fn_declaration(program)
-      }
-
-      case TokenType.OpenBracket: {
-        const arrayDeclaration = this.parse_array_value_inline(program)
-        if (arrayDeclaration) {
-          return arrayDeclaration;
-        }
-      }
-
-      // to handle negative numbers .........
-      case TokenType.BinaryOperator:
-        const val = this.eat().value
-        if (val == "-" && this.at().type == TokenType.Number) {
-          return { kind: "NumericLiteral", value: parseFloat(val + this.eat().value), tokenForDebug: token } as NumericLiteral;
-        }
-      // Unidentified Tokens and Invalid Code Reached
-      default:
-        console.error("Unexpected token found during parsing!", this.at());
-        process.exit(1);
-    }
   }
 
   private parse_array_value_declaration(isConstant: boolean, identifier: string, program: Program): Expr {

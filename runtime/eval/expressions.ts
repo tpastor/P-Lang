@@ -161,12 +161,12 @@ export function eval_assignment(
     node: AssignmentExpr,
     env: Environment,
 ): RuntimeVal {
-    if (node.assigne.kind !== "Identifier" && node.assigne.kind !== "MemberExpr") {
-        throw `Invalid LHS (must be identifier of member expression) inside assignment expr ${JSON.stringify(node.assigne)}`;
+    if (node.assignee.kind !== "Identifier" && node.assignee.kind !== "MemberExpr") {
+        throw `Invalid LHS (must be identifier of member expression) inside assignment expr ${JSON.stringify(node.assignee)}`;
     }
 
-    if (node.assigne.kind == "MemberExpr") {
-        const target = node.assigne as MemberExpr
+    if (node.assignee.kind == "MemberExpr") {
+        const target = node.assignee as MemberExpr
         const obj: ObjectVal = evaluate(target.object, env) as ObjectVal
         const value = evaluate(node.value, env)
         if (isRuntimeArray(obj)) {
@@ -177,7 +177,7 @@ export function eval_assignment(
         }
         return value;
     } else {
-        const varname = (node.assigne as Identifier).symbol;
+        const varname = (node.assignee as Identifier).symbol;
         return env.assignVar(varname, evaluate(node.value, env));
     }
 }

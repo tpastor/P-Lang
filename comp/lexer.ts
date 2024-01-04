@@ -15,7 +15,6 @@ export enum TokenType {
   NativeBlock,
   Export,
   Import,
-
   If,
   Else,
   While,
@@ -97,7 +96,7 @@ function isalpha(src: string) {
 }
 
 /**
- * Returns true if the character is whitespace like -> [\s, \t, \n]
+ * Returns true if the character is whitespace like -> [\s, \t, \n, \r]
  */
 function isskippable(str: string) {
   return str == " " || str == "\t" || str == "\n" || str == "\r";
@@ -279,7 +278,6 @@ export function tokenize(sourceCode: string): Token[] {
       // Skip unneeded chars.
       src.shift();
     } // Handle unrecognized characters.
-    // TODO: Implement better errors and error recovery.
     else {
       console.error(
         "Unrecognized character found in source: ",
