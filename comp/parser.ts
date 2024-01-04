@@ -1,3 +1,4 @@
+import BaseParser from "./baseParser";
 import {
   AggregatedExpr,
   ArrayDeclaration,
@@ -26,69 +27,11 @@ import {
   WhileExpr,
 } from "./ast";
 
-import { Token, tokenize, TokenType } from "./lexer";
+import { TokenType } from "./lexer";
 
-/**
- * Frontend for producing a valid AST from source code
- */
-export default class Parser {
-  private tokens: Token[] = [];
-
-  /*
-  * Determines if the parsing is complete and the END OF FILE Is reached.
-  */
-  private not_eof(): boolean {
-    return this.tokens[0].type != TokenType.EOF;
-  }
-
-
-  private at() {
-    return this.tokens[0] as Token;
-  }
-
-  private la(): Token | undefined {
-    if (this.tokens.length > 1) {
-      return this.tokens[1] as Token;
-    } else {
-      return undefined
-    }
-  }
-
-  /**
-   * Returns the previous token and then advances the tokens array to the next value.
-   */
-  private eat() {
-    return this.tokens.shift() as Token;
-  }
-
-
-  private expect(type: TokenType, err: any): Token {
-    const prev = this.tokens.shift() as Token;
-    if (!prev || prev.type != type) {
-      console.error("Parser Error:\n", err, prev, " - Expecting: ", type);
-      process.exit(1);
-    }
-
-    return prev;
-  }
-
-  public produceAST(sourceCode: string): Program {
-    this.tokens = tokenize(sourceCode);
-    const program: Program = {
-      kind: "Program",
-      body: [],
-    };
-
-    // Parse until end of file
-    while (this.not_eof()) {
-      program.body.push(this.parse_stmt(program));
-    }
-
-    return program;
-  }
-
-  private parse_stmt(program: Program): Stmt {
-
+export default class Parser extends BaseParser {
+  
+  protected parse_stmt(program: Program): Stmt {
     switch (this.at().type) {
       case TokenType.For:
         return this.parse_for_declaration(program);
