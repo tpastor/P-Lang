@@ -1,5 +1,6 @@
 import { eval_function } from "../runtime/eval/expressions";
 import { FunctionCall, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NUMBER, MK_STRING, NumberVal, RuntimeVal, StringVal } from "../runtime/values";
+import { getNativeValueFromRuntimeValue } from "./bridge";
 
 export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, RuntimeVal> {
     const stringFunctions: Map<string, RuntimeVal> = new Map();
@@ -8,8 +9,8 @@ export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, Run
     stringFunctions.set("get", MK_NATIVE_FN(get(array)))
     stringFunctions.set("map", MK_NATIVE_FN(map(array)))
     stringFunctions.set("filter", MK_NATIVE_FN(filter(array)))
-    stringFunctions.set("reduceToNumber", MK_NATIVE_FN(reduceToNumber(array)))
-    stringFunctions.set("reduceToString", MK_NATIVE_FN(reduceToString(array)))
+    stringFunctions.set("join", MK_NATIVE_FN(join(array)))
+    stringFunctions.set("reduce", MK_NATIVE_FN(reduce(array)))
     stringFunctions.set("set", MK_NATIVE_FN(set(array)))
     stringFunctions.set("push", MK_NATIVE_FN(push(array)))
     stringFunctions.set("pop", MK_NATIVE_FN(pop(array)))
@@ -28,21 +29,26 @@ function map(array: RuntimeVal[]): FunctionCall {
 function filter(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_ARRAY(array.filter((item) => eval_function(func, [item], scope)))
+        return MK_ARRAY(array.filter((item) => getNativeValueFromRuntimeValue(eval_function(func, [item], scope))))
     }
 }
 
-function reduceToNumber(array: RuntimeVal[]): FunctionCall {
-    return (args, scope) => {    
-        const func = args[0] as FunctionVal
-        return MK_NUMBER((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue], scope)) as NumberVal).value)
+function join(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {        
+        let delimiter = (args[0] as StringVal).value
+        let join = ""
+        for (let a of array) {
+            join += getNativeValueFromRuntimeValue(a) + delimiter
+        }        
+        return MK_STRING(join.substring(0, join.length - delimiter.length))        
     }
 }
 
-function reduceToString(array: RuntimeVal[]): FunctionCall {
+function reduce(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {    
         const func = args[0] as FunctionVal
-        return MK_STRING((array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue], scope)) as StringVal).value)
+        const initialValue = args[1]
+        return array.reduce((previous,currentValue) => eval_function(func, [previous,currentValue], scope), initialValue)
     }
 }
 

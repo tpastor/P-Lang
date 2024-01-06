@@ -1,0 +1,14 @@
+const a = [1,2]
+
+const b = a.map(fn (a) {a * a}).reduce(fn (a,b) { a + b}, 0)
+print(b)
+assert(5, b)
+
+const c = a.map(fn (a) {a * a}).filter(fn (a) { a != 1 }).reduce(fn (a,b) { a + b}, 0)
+
+print(c)
+assert(4, c)
+
+const d = a.map(fn (a) {a * a}).join("-")
+print (d)
+assert("1-4", d)
