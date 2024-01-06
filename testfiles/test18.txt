@@ -1,6 +1,6 @@
 const xx = listVariables()
-assert(false, listVariables()[listVariables().length() - 1].isEmpty())
-assert(false, listVariables()[xx.length() - 1].isEmpty())
+assert(false, listVariables()[listVariables().length() - 1].isEmpty)
+assert(false, listVariables()[xx.length() - 1].isEmpty)
 assert(false, listVariables().isEmpty())
 
 let a = 5

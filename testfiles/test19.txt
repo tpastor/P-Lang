@@ -1,5 +1,6 @@
 let tt = {
     asd: "tt",
+    ef: "",
     x: [],
     y: [1,2,3],
     z: ["a", "b"]
@@ -18,3 +19,5 @@ assert("tt", tt.asd)
 assert(3, tt.y.length())
 assert(1, tt.y[0])
 assert(true, tt.x.isEmpty())
+assert(true, tt.ef.isEmpty)
+assert(false, tt.asd.isEmpty)
