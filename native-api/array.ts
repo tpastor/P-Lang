@@ -14,6 +14,8 @@ export function createNativeArrayFunctions(array: RuntimeVal[]): Map<string, Run
     stringFunctions.set("set", MK_NATIVE_FN(set(array)))
     stringFunctions.set("push", MK_NATIVE_FN(push(array)))
     stringFunctions.set("pop", MK_NATIVE_FN(pop(array)))
+    stringFunctions.set("shift", MK_NATIVE_FN(shift(array)))
+    stringFunctions.set("unshift", MK_NATIVE_FN(unshift(array)))
     stringFunctions.set("remove", MK_NATIVE_FN(remove(array)))
     stringFunctions.set("has", MK_NATIVE_FN(has(array)))
     return stringFunctions;
@@ -67,6 +69,22 @@ function length(array: RuntimeVal[]): FunctionCall {
 function pop(array: RuntimeVal[]): FunctionCall {
     return (args, scope) => {
         return array.pop()
+    }
+}
+
+function shift(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {
+        return array.shift()
+    }
+}
+
+function unshift(array: RuntimeVal[]): FunctionCall {
+    return (args, scope) => {
+        if (args.length != 1) {
+            throw "unshift must have one parameter " + JSON.stringify(args)
+        }
+        array.unshift(args[0])
+        return args[0]
     }
 }
 
