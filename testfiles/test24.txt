@@ -4,8 +4,9 @@ assert(2, math.min(2,3,4))
 assert(4, math.max(2,3,4))
 
 
-// ValueType = "null" | "number" | "boolean" | "object" | "native-fn" | "function" | "delegatedCall" | "functionReturn";
+// ValueType = "null" | "number" | "boolean" | "object" | "native-fn" | "function" | "delegatedCall" | "functionReturn" | "array" | "string";
 assert("null", typeof(null))
 assert("number", typeof(1))
-assert("object", typeof("1231"))
+assert("string", typeof("1231"))
+assert("array", typeof([1,2]))
 assert("object", typeof({a: ""}))

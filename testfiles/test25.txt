@@ -5,10 +5,19 @@ print(b)
 assert(5, b)
 
 const c = a.map(fn (a) {a * a}).filter(fn (a) { a != 1 }).reduce(fn (a,b) { a + b}, 0)
-
 print(c)
 assert(4, c)
 
 const d = a.map(fn (a) {a * a}).join("-")
 print (d)
 assert("1-4", d)
+
+
+const e = a.map(fn (a) {a * a}).filter(fn (a) { a != 1 }).reduce(fn (a,b) { a + b}, 2)
+print(e)
+assert(6, e)
+
+const f = a.map(fn (a) {a * a}).filter(fn (a) { a != 1 })
+const g = f.reduce(fn (a,b) { a + b}, 2)
+print(g)
+assert(6, g)

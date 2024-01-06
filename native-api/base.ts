@@ -1,6 +1,6 @@
 import Environment from "../runtime/environment";
 import { eval_function } from "../runtime/eval/expressions";
-import { ArrayVal, BooleanVal, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
+import { ArrayVal, FunctionVal, MK_ARRAY, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal, getObjectToString, isRuntimeArray, isRuntimeString } from "../runtime/values";
 import { convertNativeIntoObject, getNativeValueFromRuntimeValue } from "./bridge";
 import { makeGet, makePost } from "./http";
 import fs = require('fs');
@@ -102,6 +102,15 @@ function list(args: RuntimeVal[], scope: Environment) {
 }
 
 function typeofVar(args: RuntimeVal[], scope: Environment) {
+    if (args[0].type == "object") {
+        if (isRuntimeArray(args[0])) {
+            return MK_STRING("array")
+        } else if (isRuntimeString(args[0])) {
+            return MK_STRING("string")
+        } else {
+            return MK_STRING("object")
+        }
+    }
     return MK_STRING(args[0].type)
 }
 
@@ -118,7 +127,7 @@ function system(args: RuntimeVal[], scope: Environment) {
 }
 
 function sleep(args: RuntimeVal[], scope: Environment) {
-    const {execSync} = require('child_process');
+    const { execSync } = require('child_process');
     execSync('sleep ' + (args[0] as NumberVal).value);
     return MK_NULL()
 }
