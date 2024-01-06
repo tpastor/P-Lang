@@ -24,6 +24,7 @@ function createBaseGlobalEnv() {
     env.declareVar("sleep", MK_NATIVE_FN(sleep), true, false)
     env.declareVar("print", MK_NATIVE_FN(print), true, false)
     env.declareVar("system", MK_NATIVE_FN(system), true, false)
+    env.declareVar("typeof", MK_NATIVE_FN(typeofVar), true, false)
     env.declareVar("listObjectProps", MK_NATIVE_FN(list), true, false)
     env.declareVar("listVariables", MK_NATIVE_FN(variables), true, false)
     env.declareVar("mergeObj", MK_NATIVE_FN(merge), true, false)
@@ -98,6 +99,10 @@ function remove(args: RuntimeVal[], scope: Environment) {
 
 function list(args: RuntimeVal[], scope: Environment) {
     return MK_ARRAY([...(args[0] as ObjectVal).properties.keys()].map(key => MK_STRING(key)))
+}
+
+function typeofVar(args: RuntimeVal[], scope: Environment) {
+    return MK_STRING(args[0].type)
 }
 
 function variables(args: RuntimeVal[], scope: Environment) {

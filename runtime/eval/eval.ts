@@ -11,8 +11,8 @@ export function eval_import(importExpr: Import, env: Environment): RuntimeVal {
     const parser = new Parser();
     let source;
     try {
-    source = fs.readFileSync(importExpr.fileName, 'utf8')
-    } catch(ex) {
+        source = fs.readFileSync(importExpr.fileName, 'utf8')
+    } catch (ex) {
         throw new Error("Could not load file " + importExpr, { cause: ex });
     }
     const newEnv = createGlobalEnv();
